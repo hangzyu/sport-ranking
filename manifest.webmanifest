@@ -1,0 +1,19 @@
+{
+  "name": "Ranking · 足球小组赛积分排名与解释系统",
+  "short_name": "Ranking",
+  "description": "足球小组赛积分排名、排名说明与出线条件推演工具。",
+  "lang": "zh-CN",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b1220",
+  "theme_color": "#0b1220",
+  "icons": [
+    {
+      "src": "assets/ranking-logo-v1.png",
+      "sizes": "1254x1254",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
