@@ -1,0 +1,25 @@
+.qualification-view{font-size:1rem;line-height:1.6}
+.qualification-view h2{font-size:1.4rem;margin:0 0 .25rem}
+.qualification-view p{font-size:1rem;color:var(--ink);margin:.35rem 0}
+.qualification-view .qualification-note,.qualification-view .qualification-points{font-size:.875rem;color:var(--muted)}
+.qualification-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;margin:1rem 0 .5rem}
+.qualification-controls label{font-size:1rem;font-weight:650;min-width:0}
+.qualification-controls select{display:block;margin-top:.3rem;width:100%;font-size:1rem;font-weight:500;min-height:44px;text-overflow:ellipsis}
+.qualification-table-wrap{max-width:100%;overflow-x:auto;margin:.75rem 0}
+.qualification-matrix{table-layout:fixed;border-collapse:collapse}
+.qualification-matrix th,.qualification-matrix td{text-align:left;font-size:.9375rem;padding:.65rem .45rem;vertical-align:middle;overflow-wrap:anywhere}
+.qualification-matrix th{font-weight:700;color:var(--ink)}
+.qualification-matrix th:first-child{width:20%;padding-left:0}
+.qualification-cell{width:100%;min-height:44px;padding:.55rem .6rem;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);box-shadow:none;font-size:.9375rem;font-weight:500;line-height:1.5;white-space:normal;overflow-wrap:anywhere}
+.qualification-cell:hover{transform:none;background:var(--soft)}
+.qualification-cell[aria-pressed="true"]{outline:2px solid var(--brand);outline-offset:0;background:var(--soft)}
+.qualification-cell[data-status="loading"]{color:var(--muted)}
+.qualification-detail{background:color-mix(in srgb,var(--panel) 85%,var(--soft));border-radius:18px;padding:1.2rem;margin:.75rem 0}
+.qualification-detail h3{font-size:1.2rem;margin:0}
+.qualification-detail h4{font-size:1rem;margin:1rem 0 .45rem}
+.qualification-detail ol,.qualification-detail ul{padding-left:1.5rem;margin:.5rem 0 1rem}
+.qualification-detail li{margin:.4rem 0}
+.qualification-view summary{cursor:pointer;font-size:.9375rem;padding:.45rem 0}
+.qualification-empty{background:var(--soft);border-radius:12px;padding:1rem;margin:1rem 0}
+.qualification-view button:focus-visible,.qualification-view select:focus-visible,.qualification-view summary:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+@media(max-width:600px){.qualification-controls{grid-template-columns:1fr;gap:.65rem}.qualification-matrix th,.qualification-matrix td{padding:.5rem .2rem;font-size:.875rem}.qualification-matrix th:first-child{width:19%}.qualification-cell{font-size:.875rem;padding:.45rem .25rem}.qualification-detail{padding:1rem}.qualification-view h2{font-size:1.25rem}}

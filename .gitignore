@@ -1,0 +1,26 @@
+# 构建输出（根目录已是可用站点，dist 仅为重复副本）
+dist/
+
+# 其他托管平台配置（GitHub Pages 用不到）
+.openai/
+
+# GitHub Pages 不支持的自定义响应头文件
+_headers
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+
+# 操作系统
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 依赖（本项目无包管理，预留）
+node_modules/
+
+# 日志
+*.log
