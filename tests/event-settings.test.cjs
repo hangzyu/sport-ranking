@@ -1,0 +1,12 @@
+const assert=require('node:assert/strict'),E=require('../src/event-settings.js');
+const a={id:'a',teams:['A','B'],matches:[['A','B',1,0,1,true]],method:'III',cycle:'double',qualifiers:1};
+const b={id:'b',teams:['C','D','E'],matches:[['C','D',1,1,1,true]],method:'I',cycle:'single',qualifiers:2};
+const s={status:'草稿',method:'III',cycle:'double',teams:[...a.teams],matches:a.matches.map(m=>[...m]),groups:[a,b]};
+E.normalize(s);assert.ok(s.groups.every(g=>g.method==='III'&&g.cycle==='double'));
+const rosters=JSON.stringify(s.groups.map(g=>[g.teams,g.qualifiers]));const fixtures=JSON.stringify(s.groups.map(g=>g.matches));
+E.update(s,{cycle:'single'});assert.ok(s.groups.every(g=>g.cycle==='single'));assert.equal(JSON.stringify(s.groups.map(g=>g.matches)),fixtures);
+E.update(s,{method:'V'});assert.ok(s.groups.every(g=>g.method==='V'));assert.equal(b.matches[0][5],false);assert.equal(a.matches[0][5],true);assert.equal(JSON.stringify(s.groups.map(g=>[g.teams,g.qualifiers])),rosters);
+const restored=JSON.parse(JSON.stringify(s));restored.method='I';restored.cycle='double';E.normalize(restored);assert.equal(restored.method,'V');assert.equal(restored.cycle,'single');
+s.status='进行中';assert.equal(E.update(s,{method:'I'}),false);assert.equal(s.method,'V');
+const fs=require('node:fs'),vm=require('node:vm'),html=fs.readFileSync('index.html','utf8');const context={state:s};vm.createContext(context);vm.runInContext(html.slice(html.indexOf('function groupSnapshot'),html.indexOf('function ensureGroups')),context);const fresh=context.groupSnapshot('new','新组');assert.equal(fresh.method,'V');assert.equal(fresh.cycle,'single');assert.equal(fresh.teams.length,4);assert.notEqual(fresh.teams,s.teams);
+console.log('Passed event-wide rules, migration, reload, independent rosters/qualifiers, retained scores, new-group inheritance and lock tests.');

@@ -1,6 +1,6 @@
-const CACHE_NAME='ranking-shell-v2-exact-qualification';
-const APP_SHELL=['./','./index.html','./manifest.webmanifest','./assets/ranking-logo-v1.png',
-  './src/ranking-core.js','./src/qualification-engine.js','./src/qualification-panel.js','./src/qualification.css','./src/qualification-worker.js'];
+const CACHE_NAME='ranking-shell-v8-installable';
+const APP_SHELL=['./','./index.html','./manifest.webmanifest','./src/install.js','./src/install.css','./assets/icon-192.png','./assets/icon-512.png','./assets/icon-180.png','./assets/icon-maskable-512.png','./assets/ranking-logo-v1.png',
+  './src/ranking-core.js','./src/qualification-engine.js','./src/score-table.js','./src/event-settings.js','./src/qualification-panel.js','./src/qualification.css','./src/qualification-worker.js'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(APP_SHELL)).then(()=>self.skipWaiting()));
@@ -21,13 +21,13 @@ self.addEventListener('fetch',event=>{
     return new Response(response.body,{status:response.status,statusText:response.statusText,headers});
   };
   event.respondWith((async()=>{
-    const cache=await caches.open(CACHE_NAME);
+    let cache;try{cache=await caches.open(CACHE_NAME)}catch{}
     try{
       const response=await fetch(event.request);
-      if(response.ok)await cache.put(event.request,response.clone());
+      if(response.ok&&cache)try{await cache.put(event.request,response.clone())}catch{}
       return isolated(response);
     }catch{
-      const cached=await cache.match(event.request)||(event.request.mode==='navigate'?await cache.match('./index.html'):null);
+      const cached=cache?(await cache.match(event.request)||(event.request.mode==='navigate'?await cache.match('./index.html'):null)):null;
       return cached?isolated(cached):new Response('当前离线，所需组件尚未缓存。',{status:503});
     }
   })());

@@ -23,3 +23,10 @@
 .qualification-empty{background:var(--soft);border-radius:12px;padding:1rem;margin:1rem 0}
 .qualification-view button:focus-visible,.qualification-view select:focus-visible,.qualification-view summary:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
 @media(max-width:600px){.qualification-controls{grid-template-columns:1fr;gap:.65rem}.qualification-matrix th,.qualification-matrix td{padding:.5rem .2rem;font-size:.875rem}.qualification-matrix th:first-child{width:19%}.qualification-cell{font-size:.875rem;padding:.45rem .25rem}.qualification-detail{padding:1rem}.qualification-view h2{font-size:1.25rem}}
+
+.penalty-control{display:block;margin:12px 0;font-size:1rem}.penalty-control select{margin-top:6px}
+
+.score-view{margin:1.25rem 0;padding:1rem;border:1px solid var(--line);border-radius:16px;max-width:100%;background:var(--panel)}
+.score-view h3{margin:0;font-size:1.15rem}.score-view p{font-size:.875rem}.score-controls{display:flex;flex-wrap:wrap;gap:.6rem;margin:.8rem 0}.score-controls>div{display:flex;align-items:center;flex-wrap:wrap;gap:.3rem}.score-view input{width:5rem;padding:.4rem;font-size:.875rem}.score-view button{font-size:.875rem;min-height:36px;padding:.4rem .6rem}.score-scroll{overflow:auto;max-height:400px}.score-scroll table{width:100%;min-width:520px;border-collapse:collapse}.score-scroll th,.score-scroll td{padding:.3rem;border:1px solid var(--line);text-align:center;font-size:.875rem}.score-scroll th{background:var(--soft)}.score-scroll button{width:100%;border-radius:6px;white-space:nowrap}.score-scroll button[data-status=qualified]{background:#185b49;color:#fff}.score-scroll button[data-status=eliminated]{background:#803b45;color:#fff}.score-scroll button[data-status=pending]{background:#775b12;color:#fff}.score-selection{margin-top:.7rem}.score-view button:focus-visible{outline:3px solid var(--brand)}
+
+.event-rules-block{padding:1rem 0;border-bottom:1px solid var(--line);margin-bottom:1rem}.event-rules-block h3{font-size:1rem;margin:.5rem 0}.event-rules-block p{font-size:.875rem;color:var(--muted);line-height:1.6}

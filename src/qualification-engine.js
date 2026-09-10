@@ -39,22 +39,23 @@
       if(!teams.includes(a)||!teams.includes(b)||a===b)throw new Error('赛程中有无效的对阵。');
       const key=[teams.indexOf(a),teams.indexOf(b)].sort((x,y)=>x-y).join(',');counts.set(key,(counts.get(key)||0)+1);
       for(const t of [a,b]){const key=JSON.stringify([rounds[i],t]);if(seen.has(key))throw new Error(`第${rounds[i]}轮有球队被重复安排比赛。`);seen.add(key)}
-      if(m[5])completed.push([a,b,Core.integer(m[2]),Core.integer(m[3])]);
+      if(m[5])completed.push([a,b,Core.integer(m[2]),Core.integer(m[3]),m[7]]);
       else if(rounds[i]!==lastRound)throw new Error(`请先确认前几轮的赛果：第${rounds[i]}轮 ${a} vs ${b}。`);
       else remaining.push({id:String(i),home:a,away:b});
     }
     for(let a=0;a<teams.length;a++)for(let b=a+1;b<teams.length;b++)if(counts.get(`${a},${b}`)!==meetingCount)throw new Error('赛程尚不完整或存在重复对阵，请先补齐本组循环赛程。');
-    return{teams,topK,rule,lastRound,completed,remaining,current:Core.statistics(teams,completed)};
+    return{teams,topK,rule,lastRound,completed,remaining,current:Core.statistics(teams,completed,rule)};
   }
 
   function symbolicStats(input,scope,outcomes){
     const n=outcomes.length*2,data=Object.fromEntries(scope.map(t=>[t,{points:zero(n),goal_difference:zero(n),goals_for:zero(n)}]));
     const constant=v=>({...zero(n),constant:BigInt(v)});
-    const games=input.completed.map(([a,b,x,y])=>[a,b,constant(x),constant(y),x>y?'W':x<y?'L':'D']);
-    input.remaining.forEach((m,i)=>{const x=zero(n),y=zero(n);x.co[2*i]=1;y.co[2*i+1]=1;games.push([m.home,m.away,x,outcomes[i]==='D'?x:y,outcomes[i]])});
+    const games=input.completed.map(([a,b,x,y,w])=>[a,b,constant(x),constant(y),Core.result(a,b,x,y,w,input.rule)]);
+    input.remaining.forEach((m,i)=>{const x=zero(n),y=zero(n);x.co[2*i]=1;y.co[2*i+1]=1;games.push([m.home,m.away,x,['D','PW','PL'].includes(outcomes[i])?x:y,outcomes[i]])});
     for(const [a,b,x,y,o] of games){
       if(!Object.hasOwn(data,a)||!Object.hasOwn(data,b))continue;
-      for(const [t,gf,ga,p] of [[a,x,y,o==='W'?3:o==='D'?1:0],[b,y,x,o==='L'?3:o==='D'?1:0]]){
+      const pts=Core.pointsFor(input.rule,o);
+      for(const [t,gf,ga,p] of [[a,x,y,pts[0]],[b,y,x,pts[1]]]){
         const r=data[t];r.points=add(r.points,constant(p));r.goals_for=add(r.goals_for,gf);r.goal_difference=add(r.goal_difference,sub(gf,ga));
       }
     }
@@ -84,7 +85,7 @@
   }
 
   async function analyze(input,target,outcomes,query,{maxRegions=1000,maxMs=25000,simplify=true}={}){
-    if(!input.teams.includes(target)||outcomes.length!==input.remaining.length||outcomes.some(o=>!['W','D','L'].includes(o)))throw new Error('无效的球队或胜平负组合。');
+    if(!input.teams.includes(target)||outcomes.length!==input.remaining.length||outcomes.some(o=>!Core.outcomes(input.rule).includes(o)))throw new Error('无效的球队或胜平负组合。');
     const names=namesFor(outcomes.length*2),base=names.map(n=>`(>= ${n} 0)`),started=Date.now();
     outcomes.forEach((o,i)=>base.push(`(${o==='W'?'>':o==='L'?'<':'='} ${names[2*i]} ${names[2*i+1]})`));
     const covered=[],paths=[],examples={};let complete=false,reason='推演达到时间限制，请重试。',finalPoints=null;
@@ -102,12 +103,12 @@
       if(check.status==='unsat'){complete=true;break}
       if(check.status!=='sat'){reason='本次未能完成全部比分的验证，请重试。';break}
       if(paths.length>=maxRegions){reason='比赛组合较复杂，本次推演尚未覆盖全部条件。';break}
-      const matches=[...input.completed,...input.remaining.map((m,i)=>[m.home,m.away,check.values[2*i],check.values[2*i+1]])];
+      const matches=[...input.completed,...input.remaining.map((m,i)=>[m.home,m.away,check.values[2*i],check.values[2*i+1],outcomes[i]==='PW'?m.home:outcomes[i]==='PL'?m.away:null])];
       const ranked=Core.rank(input.teams,matches,input.rule),cache=new Map(),history=new Map(),symbolicTrace=[];let conditions=[];
       finalPoints=Object.fromEntries(input.teams.map(t=>[t,ranked.statistics[t].points]));
       for(const step of ranked.trace){
         const key=JSON.stringify([step.scope,step.scope_teams]);
-        if(!cache.has(key)){cache.set(key,symbolicStats(input,step.scope_teams,outcomes));history.set(key,Core.statistics(step.scope_teams,input.completed))}
+        if(!cache.has(key)){cache.set(key,symbolicStats(input,step.scope_teams,outcomes));history.set(key,Core.statistics(step.scope_teams,input.completed,input.rule))}
         const data=cache.get(key),field=step.criterion;
         for(const g of step.result)for(const t of g.slice(1))conditions.push(condition(sub(data[g[0]][field],data[t][field]),true));
         for(let i=0;i+1<step.result.length;i++)conditions.push(condition(sub(data[step.result[i][0]][field],data[step.result[i+1][0]][field])));
