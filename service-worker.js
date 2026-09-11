@@ -1,4 +1,4 @@
-const CACHE_NAME='ranking-shell-v8-installable';
+const CACHE_NAME='ranking-shell-v9-bounded-scores';
 const APP_SHELL=['./','./index.html','./manifest.webmanifest','./src/install.js','./src/install.css','./assets/icon-192.png','./assets/icon-512.png','./assets/icon-180.png','./assets/icon-maskable-512.png','./assets/ranking-logo-v1.png',
   './src/ranking-core.js','./src/qualification-engine.js','./src/score-table.js','./src/event-settings.js','./src/qualification-panel.js','./src/qualification.css','./src/qualification-worker.js'];
 

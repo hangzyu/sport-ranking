@@ -8,7 +8,7 @@
   const make=(tag,text,className)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(className)e.className=className;return e};
   function stop(reason='已切换推演条件'){if(worker)worker.terminate();worker=null;if(inflight){clearTimeout(inflight.timer);inflight.reject(new Error(reason));inflight=null}}
   function ask(payload){
-    if(!global.crossOriginIsolated||typeof SharedArrayBuffer==='undefined')return Promise.reject(new Error('页面更新尚未生效，请保存并刷新后使用精确推演。'));
+
     if(!worker){
       worker=new Worker(new URL('./qualification-worker.js',new URL('src/qualification-panel.js',document.baseURI)));
       const instance=worker;
@@ -36,6 +36,12 @@
     const r=cell.report;
     detail.append(make('p',Object.entries(r.final_points||{}).map(([t,p])=>`${t} ${p}分`).join(' · '),'qualification-points'));
     if(!r.complete){detail.append(make('p',r.incomplete_reason||'推演尚未完成，不能对未覆盖的比分作出结论。'));const button=make('button','重新计算','secondary');button.onclick=retry;detail.append(button);return}
+    if(r.score_limit!==undefined){
+      detail.append(make('p','仅推演每队进球 0～10 球的比分；结论仅适用于此范围。'));
+      detail.append(make('p',Object.entries(r.counts).map(([s,n])=>`${{qualified:'出线',pending:'待决胜',eliminated:'淘汰'}[s]} ${n} 组`).join(' · ')));
+      if(detail.scoreHost)global.ScoreTable.render(detail.scoreHost,input,r);
+      return;
+    }
     for(const [status,label] of [['qualified','确定出线'],['pending','出线资格待决胜']]){
       const rules=r.conditions_by_status[status];if(!rules.length)continue;
       detail.append(make('h4',`${label} · ${rules.some(g=>g.length===0)?'本格所有比分':'满足以下任一组'}`));
@@ -62,7 +68,7 @@
   }
   function render(host,state,callbacks={}){
     const token=++revision;if(inflight)stop();host.replaceChildren();host.classList.add('qualification-view');
-    host.append(make('h2','末轮出线条件'));
+    host.append(make('h2','末轮出线条件'));host.append(make('p','比分范围：每队 0～10 球，出线结论仅适用于此范围。','qualification-note'));
     const confirmed=state.matches.filter(m=>m[5]).length;
     host.append(make('p',`前${state.qualifiers}名出线 · 已确认${confirmed}/${state.matches.length}场`,'qualification-note'));
     const controls=make('div',undefined,'qualification-controls'),teamLabel=make('label','关注球队'),teamSelect=make('select',undefined,'field');
@@ -122,8 +128,8 @@
           catch(error){
             if(token!==revision||current!==generation)return;
             for(const c of cells)if(!c.report){c.error=error.message;paint(c)}
-            const retry=make('button',global.crossOriginIsolated?'重新计算':'保存并刷新','secondary');
-            retry.onclick=()=>{if(global.crossOriginIsolated){for(const c of cells)c.error=null;stop();rebuild()}else callbacks.onRefresh?.()};detail.append(retry);return;
+            const retry=make('button','重新计算','secondary');
+            retry.onclick=()=>{for(const c of cells)c.error=null;stop();rebuild()};detail.append(retry);return;
           }
         }
       })();

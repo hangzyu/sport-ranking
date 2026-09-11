@@ -146,6 +146,24 @@
       variables:input.remaining.flatMap(m=>[{match_id:m.id,team:m.home},{match_id:m.id,team:m.away}]),
       conditions_by_status:conditionsByStatus,examples});
   }
-  const api={fromState,analyze,createOracle,symbolicStats,formula,condition,jsonSafe};
+
+  // Finite score domain for the interactive view; retain symbolic API for other callers.
+  function analyzeBounded(input,target,outcomes,{maxMs=20000}={}){
+    if(!input.teams.includes(target)||outcomes.length!==input.remaining.length||outcomes.some(o=>!Core.outcomes(input.rule).includes(o)))throw Error('无效的球队或胜平负组合。');
+    const choices=outcomes.map(o=>{const list=[];for(let a=0;a<=10;a++)for(let b=0;b<=10;b++)if(o==='W'?a>b:o==='L'?a<b:a===b)list.push([a,b]);return list});
+    const score_status={},counts={qualified:0,pending:0,eliminated:0},scores=[],started=Date.now();let complete=true,final_points=null;
+    function visit(i){
+      if(Date.now()-started>maxMs){complete=false;return}
+      if(i<choices.length){for(const pair of choices[i]){scores[i]=pair;visit(i+1);if(!complete)break}return}
+      const matches=[...input.completed,...input.remaining.map((m,k)=>[m.home,m.away,...scores[k],outcomes[k]==='PW'?m.home:outcomes[k]==='PL'?m.away:null])];
+      const ranked=Core.rank(input.teams,matches,input.rule),status=Core.qualification(ranked.groups.find(g=>g.teams.includes(target)),input.topK);
+      score_status[scores.flat().join(',')]=status;counts[status]++;
+      if(!final_points)final_points=Object.fromEntries(input.teams.map(t=>[t,ranked.statistics[t].points]));
+    }
+    visit(0);const statuses=Object.keys(counts).filter(s=>counts[s]);
+    return jsonSafe({target,rule:input.rule,outcomes,score_limit:10,score_status,counts,complete,final_points,
+      summary:!complete?'incomplete':statuses.length===1?statuses[0]:'conditional',incomplete_reason:complete?null:'组合较多，尚未完成，请减少待赛场次。'});
+  }
+  const api={analyzeBounded,fromState,analyze,createOracle,symbolicStats,formula,condition,jsonSafe};
   if(typeof module!=='undefined')module.exports=api;else global.QualificationEngine=api;
 })(globalThis);

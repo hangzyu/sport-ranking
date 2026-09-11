@@ -12,6 +12,7 @@ function scoreAt(index,outcome){
  return outcome==='W'?[home,away]:[away,home];
 }
 function classify(report,scores){
+ if(report.score_limit!==undefined)return report.complete?report.score_status[scores.join(',')]||'incomplete':'incomplete';
  const matches=Object.entries(report.conditions_by_status).filter(([,groups])=>groups.some(cs=>cs.every(c=>{
   const value=c.coefficients.reduce((sum,k,i)=>sum+BigInt(k)*scores[i],0n);
   return c.op==='='?value===BigInt(c.rhs):value>=BigInt(c.rhs);
@@ -21,30 +22,31 @@ function classify(report,scores){
 function render(host,input,report){
  host.replaceChildren();const make=(tag,text)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;return e};
  host.className='score-view';host.append(make('h3',`${report.target} · 比分出线表`));
- host.append(make('p','✓ 出线　× 淘汰　○ 待决胜。每格对应具体比分；翻页查看更多，当前表格不代表全部比分。'));
+ host.append(make('p','✓ 出线　× 淘汰　○ 待决胜。每格对应具体比分；仅展示每队 0～10 球，翻页查看此范围内的比分。'));
  const own=input.remaining.findIndex(m=>m.home===report.target||m.away===report.target),row=own<0?0:own,col=input.remaining.findIndex((_,i)=>i!==row);
+ const count=i=>['D','PW','PL'].includes(report.outcomes[i])?11:55;
  const valid=input.remaining.map(()=>true),pages=[0,0],fixed=input.remaining.map((_,i)=>scoreAt(0,report.outcomes[i]));
  const title=i=>{const m=input.remaining[i];return `${m.home}—${m.away}${report.outcomes[i]==='PW'?`（${m.home}点球胜）`:report.outcomes[i]==='PL'?`（${m.away}点球胜）`:''}`};
  const extra=make('div');
  input.remaining.forEach((m,i)=>{if(i===row||i===col)return;
   const label=make('label',`固定 ${title(i)} 比分：`),x=make('input'),y=make('input'),note=make('span');
-  for(const [j,e]of [x,y].entries()){e.type='number';e.min='0';e.value=String(fixed[i][j]);e.setAttribute('aria-label',`${j?m.away:m.home}进球`)}
-  const change=()=>{try{const a=C.integer(x.value),b=C.integer(y.value),o=report.outcomes[i];if(o==='W'?a<=b:o==='L'?a>=b:a!==b)throw Error('比分须符合所选情景');fixed[i]=[a,b];valid[i]=true;note.textContent='';draw()}catch(e){valid[i]=false;note.textContent=e.message;grid.replaceChildren();selection.replaceChildren()}};
+  for(const [j,e]of [x,y].entries()){e.type='number';e.min='0';e.max='10';e.value=String(fixed[i][j]);e.setAttribute('aria-label',`${j?m.away:m.home}进球`)}
+  const change=()=>{try{const a=C.integer(x.value),b=C.integer(y.value),o=report.outcomes[i];if(a>10n||b>10n)throw Error('每队进球须在 0～10 球之间');if(o==='W'?a<=b:o==='L'?a>=b:a!==b)throw Error('比分须符合所选情景');fixed[i]=[a,b];valid[i]=true;note.textContent='';draw()}catch(e){valid[i]=false;note.textContent=e.message;grid.replaceChildren();selection.replaceChildren()}};
   x.onchange=y.onchange=change;label.append(x,make('span','∶'),y,note);extra.append(label);
  });host.append(extra);
  const controls=make('div');controls.className='score-controls';
  [row,col].forEach((axis,k)=>{if(axis<0)return;const box=make('div');box.append(make('span',`${k?'列':'行'}：${title(axis)} `));
-  const prev=make('button','上一页'),next=make('button','下一页'),page=make('input');page.type='number';page.min='1';page.value='1';page.setAttribute('aria-label',`${k?'列':'行'}比分页码`);
-  const update=n=>{if(!Number.isSafeInteger(n)||n<0||n>1000000){page.value=String(pages[k]+1);return}pages[k]=n;page.value=String(n+1);prev.disabled=n===0;draw()};
+  const prev=make('button','上一页'),next=make('button','下一页'),page=make('input');page.type='number';page.min='1';page.max=String(Math.ceil(count(axis)/6));page.value='1';page.setAttribute('aria-label',`${k?'列':'行'}比分页码`);
+  const update=n=>{if(!Number.isSafeInteger(n)||n<0||n>=Math.ceil(count(axis)/6)){page.value=String(pages[k]+1);return}pages[k]=n;page.value=String(n+1);prev.disabled=n===0;next.disabled=n===Math.ceil(count(axis)/6)-1;draw()};
   prev.disabled=true;prev.onclick=()=>update(pages[k]-1);next.onclick=()=>update(pages[k]+1);page.onchange=()=>update(Number(page.value)-1);box.append(prev,page,next);controls.append(box);
  });host.append(controls);
  const grid=make('div');grid.className='score-scroll';const selection=make('div');selection.className='score-selection';selection.setAttribute('aria-live','polite');host.append(grid,selection);
  function draw(){
   grid.replaceChildren();selection.replaceChildren();if(valid.some(v=>!v))return;const table=make('table'),head=make('thead'),hr=make('tr');
   hr.append(make('th',col<0?title(row):`${title(row)} ↓ / ${title(col)} →`));
-  const columns=col<0?[null]:Array.from({length:6},(_,j)=>scoreAt(pages[1]*6+j,report.outcomes[col]));
+  const columns=col<0?[null]:Array.from({length:Math.min(6,count(col)-pages[1]*6)},(_,j)=>scoreAt(pages[1]*6+j,report.outcomes[col]));
   columns.forEach(s=>{const th=make('th',s?s.join('∶'):'结论');th.scope='col';hr.append(th)});head.append(hr);table.append(head);const body=make('tbody');
-  for(let i=0;i<6;i++){const rs=scoreAt(pages[0]*6+i,report.outcomes[row]),tr=make('tr'),th=make('th',rs.join('∶'));th.scope='row';tr.append(th);
+  for(let i=0;i<Math.min(6,count(row)-pages[0]*6);i++){const rs=scoreAt(pages[0]*6+i,report.outcomes[row]),tr=make('tr'),th=make('th',rs.join('∶'));th.scope='row';tr.append(th);
    for(const cs of columns){const values=fixed.map(s=>[...s]);values[row]=rs;if(col>=0)values[col]=cs;
     const status=classify(report,values.flat()),td=make('td'),button=make('button',labels[status]);button.dataset.status=status;
     button.setAttribute('aria-label',`${title(row)} ${rs.join('∶')}${cs?`；${title(col)} ${cs.join('∶')}`:''}：${labels[status]}`);
