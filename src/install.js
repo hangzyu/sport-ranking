@@ -44,7 +44,7 @@ function paint(){
  const update=make('button',text('保存并检查更新','儲存並檢查更新'));update.onclick=async()=>{if(!callbacks.save()){paint();return}update.disabled=true;try{const reg=await navigator.serviceWorker?.getRegistration();if(reg)await reg.update();update.textContent=text('已保存，点击重新打开','已儲存，點擊重新開啟');update.disabled=false;update.onclick=()=>{if(callbacks.save())location.reload()}}catch{update.disabled=false;update.textContent=text('检查失败，请联网后重试','檢查失敗，請連線後重試')}};body.append(update);
 }
 function init(options){callbacks=options;const actions=document.querySelector('.header-actions');if(!actions)return;
- launch=make('button',standalone()?'应用与备份':'安装 Ranking');launch.id='installRanking';launch.onclick=()=>{paint();dialog.showModal()};actions.prepend(launch);
+ launch=make('button',standalone()?'应用与备份':'安装 Ranking');launch.id='installRanking';launch.className='secondary';launch.onclick=()=>{paint();dialog.showModal()};actions.prepend(launch);
  const status=make('span');status.id='localSaveStatus';status.setAttribute('role','status');status.className='save-status';actions.append(status);saved(saveOK);
  dialog=make('dialog');dialog.className='install-dialog';dialog.setAttribute('aria-label','安装 Ranking 与赛事备份');const close=make('button','×');close.className='install-close secondary';close.setAttribute('aria-label','关闭');close.onclick=()=>dialog.close();body=make('div');dialog.append(close,body);document.body.append(dialog);
  global.addEventListener('online',()=>{if(dialog.open)paint()});global.addEventListener('offline',()=>{if(dialog.open)paint()});

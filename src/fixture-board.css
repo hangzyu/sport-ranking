@@ -1,0 +1,22 @@
+.fixture-footer{justify-content:space-between}
+.match-status{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:8px;
+  height:8px;
+  flex:none;
+}
+.status-dot{
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:#a1a1aa;
+}
+.match-status[data-state="live"] .status-dot,
+.match-status[data-state="done"] .status-dot{background:var(--good)}
+.match-status[data-state="live"] .status-dot{animation:status-blink 1.15s cubic-bezier(.32,.72,0,1) infinite}
+@keyframes status-blink{
+  0%,100%{opacity:1}
+  50%{opacity:.28}
+}

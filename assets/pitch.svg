@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1050 680" fill="none">
+  <rect x="36" y="28" width="978" height="624" rx="18" stroke="#fff" stroke-width="5"/>
+  <line x1="525" y1="28" x2="525" y2="652" stroke="#fff" stroke-width="5"/>
+  <circle cx="525" cy="340" r="92" stroke="#fff" stroke-width="5"/>
+  <circle cx="525" cy="340" r="6" fill="#fff"/>
+  <rect x="36" y="184" width="150" height="312" stroke="#fff" stroke-width="5"/>
+  <rect x="36" y="254" width="62" height="172" stroke="#fff" stroke-width="5"/>
+  <rect x="864" y="184" width="150" height="312" stroke="#fff" stroke-width="5"/>
+  <rect x="952" y="254" width="62" height="172" stroke="#fff" stroke-width="5"/>
+  <circle cx="168" cy="340" r="5" fill="#fff"/>
+  <circle cx="882" cy="340" r="5" fill="#fff"/>
+  <path d="M186 270a70 70 0 0 1 0 140" stroke="#fff" stroke-width="5"/>
+  <path d="M864 270a70 70 0 0 0 0 140" stroke="#fff" stroke-width="5"/>
+  <path d="M36 48a20 20 0 0 0 20-20" stroke="#fff" stroke-width="4"/>
+  <path d="M1014 48a20 20 0 0 1-20-20" stroke="#fff" stroke-width="4"/>
+  <path d="M36 632a20 20 0 0 1 20 20" stroke="#fff" stroke-width="4"/>
+  <path d="M1014 632a20 20 0 0 0-20 20" stroke="#fff" stroke-width="4"/>
+  <path d="M16 292h20v96H16" stroke="#fff" stroke-width="4"/>
+  <path d="M1034 292h-20v96h20" stroke="#fff" stroke-width="4"/>
+</svg>
