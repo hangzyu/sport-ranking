@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "dependencies": {
+    "@alicloud/dypnsapi20170525": "^2.0.0",
+    "@alicloud/openapi-client": "^0.4.15",
+    "@supabase/supabase-js": "^2.117.3"
+  }
+}

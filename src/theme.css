@@ -289,31 +289,41 @@ dialog::backdrop,.method-dialog::backdrop,.install-dialog::backdrop{
 
 .score-boxes{
   display:grid;
-  grid-template-columns:2.4ch auto 2.4ch;
-  align-items:end;
-  justify-content:center;
-  gap:6px;
+  grid-template-columns:2.6ch 14px 2.6ch;
+  grid-template-rows:auto auto;
+  align-items:center;
+  justify-items:center;
+  column-gap:4px;
+  row-gap:3px;
   padding:0;
   border:0;
   border-radius:0;
   background:transparent;
   box-shadow:none;
 }
-.score-boxes::after{
-  content:"–";
-  grid-column:2;
+.score-caption{
+  grid-column:1 / -1;
   grid-row:1;
-  position:static;
-  width:auto;
-  height:auto;
-  margin:0 0 4px;
-  background:none;
-  filter:none;
   color:var(--muted);
-  font-size:14px;
-  font-weight:500;
+  font-size:11px;
+  font-weight:650;
+  letter-spacing:.14em;
   line-height:1;
+}
+.score-boxes::after{
+  content:"";
+  grid-column:2;
+  grid-row:2;
+  position:static;
+  width:10px;
+  height:1px;
+  margin:0;
+  border-radius:1px;
+  background:var(--line);
+  filter:none;
   pointer-events:none;
+  justify-self:center;
+  align-self:end;
 }
 .score-boxes input{
   position:relative;
@@ -335,8 +345,8 @@ dialog::backdrop,.method-dialog::backdrop,.install-dialog::backdrop{
   -moz-appearance:textfield;
   appearance:textfield;
 }
-.score-boxes input:first-of-type{grid-column:1;grid-row:1}
-.score-boxes input:last-of-type{grid-column:3;grid-row:1}
+.score-boxes input:first-of-type{grid-column:1;grid-row:2}
+.score-boxes input:last-of-type{grid-column:3;grid-row:2}
 .score-boxes input::-webkit-outer-spin-button,.score-boxes input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .score-boxes input:focus{
   outline:none;
@@ -358,17 +368,19 @@ dialog::backdrop,.method-dialog::backdrop,.install-dialog::backdrop{
 
 .event-context span,#standing tbody td b,.public-dialog-content td b{color:var(--brand)}
 tr.qualifier-row td,.scenario-tile.qualifier-scenario{background:transparent}
-tr.qualifier-row td:first-child{box-shadow:none;border-left:2px solid var(--brand)}
-.scenario-tile.qualifier-scenario{border-color:var(--brand)}
-#standing tbody tr:nth-child(-n+3) td:first-child::before{
+tr.qualifier-row td:first-child{position:relative;box-shadow:none;border-left:0}
+tr.qualifier-row td:first-child::after{
   content:"";
-  display:inline-block;
-  width:7px;height:7px;margin-right:6px;border-radius:50%;vertical-align:1px;
-  box-shadow:none;
+  position:absolute;
+  left:0;
+  top:50%;
+  width:3px;
+  height:14px;
+  transform:translateY(-50%);
+  border-radius:2px;
+  background:var(--brand);
 }
-#standing tbody tr:nth-child(1) td:first-child::before{background:light-dark(#111111,#f4f4f5)}
-#standing tbody tr:nth-child(2) td:first-child::before{background:#a1a1aa}
-#standing tbody tr:nth-child(3) td:first-child::before{background:light-dark(#d4d4d8,#3f3f46)}
+.scenario-tile.qualifier-scenario{border-color:var(--brand)}
 .member-role,.simulation-label,.scenario-kicker,.public-kicker{color:var(--muted)}
 
 .header-actions{align-items:center;gap:8px}

@@ -24,3 +24,11 @@ node_modules/
 
 # 日志
 *.log
+
+# 短信通道密钥（示例见 server/sms.config.example.json）
+server/sms.config.json
+
+# 环境变量（示例见 .env.example）
+.env
+.env.*
+!.env.example

@@ -28,18 +28,20 @@
   <style>
     .sidebar-collapse-toggle{position:fixed;top:50%;right:auto;transform:translate(-50%,-50%)}
     .grid.sidebar-collapsed .sidebar-collapse-toggle{transform:translate(-50%,-50%)}
-    .header-actions{flex-wrap:wrap;justify-content:flex-end}.account-entry{white-space:nowrap}.login-dialog .dialog-content{min-width:min(390px,calc(100vw - 34px))}.login-dialog h2{margin:0 0 6px}.login-intro{margin:0 0 14px}.login-form{display:grid;gap:10px;margin-top:16px}.login-code-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}.login-code-row button{padding:9px 11px;font-size:12px}.login-hint{min-height:18px;margin:0;color:var(--muted);font-size:12px;line-height:1.5}.login-demo{margin-top:12px;padding:9px 10px;border-radius:9px;background:var(--soft);color:var(--muted);font-size:12px;line-height:1.55}.login-submit{margin-top:4px}.account-panel{display:grid;gap:6px;font-size:13px}.account-panel strong{font-size:15px}.account-panel p{margin:0}.account-actions{display:flex;justify-content:flex-end;margin-top:14px}.account-actions button{padding:8px 11px;font-size:12px}
+    .header-actions{flex-wrap:wrap;justify-content:flex-end}.account-entry{white-space:nowrap}.login-dialog .dialog-content{min-width:min(390px,calc(100vw - 34px))}.login-dialog h2{margin:0 0 6px}.login-intro{margin:0 0 14px}.login-form{display:grid;gap:10px;margin-top:16px}.login-code-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}.login-code-row button{padding:9px 11px;font-size:12px}.login-hint{min-height:18px;margin:0;color:var(--muted);font-size:12px;line-height:1.5}.login-hint.is-error{color:var(--warn);font-weight:650}.login-hint.is-ok{color:var(--good)}.login-code-row button{min-width:108px}.login-demo{margin-top:12px;padding:9px 10px;border-radius:9px;background:var(--soft);color:var(--muted);font-size:12px;line-height:1.55}.login-submit{margin-top:4px}.login-modes{display:grid;grid-template-columns:1fr 1fr;gap:8px}.login-modes button{min-height:36px}.login-modes button.is-current{font-weight:700}.password-form{display:grid;gap:8px;margin-top:14px}.password-form h3{margin:0;font-size:14px}.account-panel{display:grid;gap:6px;font-size:13px}.account-panel strong{font-size:15px}.account-panel p{margin:0}.account-actions{display:flex;justify-content:flex-end;margin-top:14px}.account-actions button{padding:8px 11px;font-size:12px}
     @media(max-width:760px){.sidebar-collapse-toggle,.grid.sidebar-collapsed .sidebar-collapse-toggle{top:50%;transform:translate(-50%,-50%)}}
   </style>
 <link rel="stylesheet" href="src/qualification.css">
-<link rel="stylesheet" href="src/theme.css?v=22">
-<link rel="stylesheet" href="src/fixture-board.css?v=2">
+<link rel="stylesheet" href="src/theme.css?v=23">
+  <link rel="stylesheet" href="src/fixture-board.css?v=3">
 <script src="src/billing.js"></script>
 <script src="src/ranking-core.js"></script>
 <script src="src/qualification-engine.js"></script>
 <script src="src/score-table.js"></script><script src="src/event-settings.js"></script><script src="src/qualification-panel.js"></script>
 <script src="src/header-bar.js"></script>
-<script src="src/fixture-board.js"></script>
+<script src="src/phone-login.js"></script>
+<script src="src/cloud-sync.js"></script>
+<script src="src/fixture-board.js?v=3"></script>
 </head>
 <body><div class="stadium" aria-hidden="true"><div class="pitch"></div><i class="goal goal-l"></i><i class="goal goal-r"></i></div><main class="app"><i class="flag flag-tl" aria-hidden="true"></i><i class="flag flag-tr" aria-hidden="true"></i><i class="flag flag-bl" aria-hidden="true"></i><i class="flag flag-br" aria-hidden="true"></i><i class="ball ball-a" aria-hidden="true"></i><i class="ball ball-b" aria-hidden="true"></i><i class="ball ball-c" aria-hidden="true"></i><header><div><div class="eyebrow">FOOTBALL GROUP STANDINGS</div><h1>Ranking</h1><p>足球小组赛积分排名与解释系统</p></div><div class="header-actions"><span class="status" id="statusBadge">草稿</span><button id="publish" type="button">发布赛事</button><button class="secondary" id="save" type="button">保存赛事</button></div></header><div class="grid"><aside class="card"><h2>赛事设置</h2><label class="label">赛事名称</label><input class="field" id="name" value="示例足球小组赛"><div class="label label-line">积分排名方法 <button class="info" id="methodInfo" type="button" aria-label="查看积分排名方法说明">i</button></div><select class="field" id="method"><option value="I">类型 I：先相互比较；再全组比较</option><option value="II" selected>类型 II：先相互比较；任一步分组后立即重新比较；最后全组比较</option><option value="III">类型 III：先全组比较；再相互比较</option><option value="IV">类型 IV：胜3分；点球胜2分、负0分</option><option value="V">类型 V：胜3分；点球胜2分、负1分</option></select><div class="notice" id="methodHelp"></div><label class="label">球队</label><div class="teams" id="teams"></div><button class="secondary" id="updateTeams" style="margin-top:10px">更新球队名称</button></aside><section class="card"><div class="tabs"><button class="tab active" data-view="schedule">赛程与赛果</button><button class="tab" data-view="standing">积分榜</button><button class="tab" data-view="trace">排名说明</button><button class="tab" data-view="simulation">情景推演</button><button class="tab" data-view="members">成员授权</button></div><div id="schedule"></div><div id="standing" class="hidden"></div><div id="trace" class="hidden"></div><div id="simulation" class="hidden"></div><div id="members" class="hidden"></div></section></div></main><dialog class="method-dialog" id="methodDialog"><div class="dialog-content"><button class="dialog-close" id="closeDialog" type="button" aria-label="关闭">×</button><h2 id="dialogTitle"></h2><p id="dialogLead"></p><ol class="method-list" id="dialogRules"></ol></div></dialog><script>function compute(matches=state.matches){
   const actual=matches.filter(m=>m[5]).map(m=>[m[0],m[1],m[2],m[3],m[7]]);
@@ -78,7 +80,7 @@ const $=id=>document.getElementById(id);const methods={I:'相关球队的相互�
 function validateSchedule(){const issues=[],byRound={},pairCounts={},maxMeetings=(state.cycle||'single')==='double'?2:1;if(state.teams.length<2)issues.push('每个小组至少需要 2 支球队。');if(+state.qualifiers<1||+state.qualifiers>state.teams.length)issues.push(`出线名额应在 1 至 ${state.teams.length} 之间。`);if(!state.matches.length)issues.push('请至少安排一场比赛后再发布赛事。');state.matches.forEach((m,i)=>{if(m[0]===m[1])issues.push(`第 ${m[4]} 轮第 ${i+1} 场：同一场比赛不能选择同一支球队。`);(byRound[m[4]]??=[]).push([m,i]);const pair=[m[0],m[1]].sort().join('|');pairCounts[pair]=(pairCounts[pair]||0)+1});Object.entries(byRound).forEach(([round,items])=>{const seen=new Set;items.forEach(([m])=>[m[0],m[1]].forEach(t=>{if(seen.has(t))issues.push(`第 ${round} 轮：${t} 被安排了两场比赛。`);seen.add(t)}))});Object.entries(pairCounts).forEach(([pair,count])=>{if(count>maxMeetings)issues.push(`${pair.replace('|',' 与 ')} 已安排 ${count} 次交手，${maxMeetings===1?'单循环最多 1 次':'双循环最多 2 次'}。`)});return issues}
 function validateGroupData(group){const issues=[],byRound={},pairCounts={},teams=group.teams||[],matches=group.matches||[],maxMeetings=(group.cycle||'single')==='double'?2:1;if(teams.length<2)issues.push('至少需要 2 支球队。');if(+group.qualifiers<1||+group.qualifiers>teams.length)issues.push(`出线名额应在 1 至 ${teams.length} 之间。`);if(!matches.length)issues.push('请至少安排一场比赛。');matches.forEach((match,index)=>{if(match[0]===match[1])issues.push(`第 ${match[4]} 轮第 ${index+1} 场：同一场不能选择同一支球队。`);(byRound[match[4]]??=[]).push(match);const pair=[match[0],match[1]].sort().join('|');pairCounts[pair]=(pairCounts[pair]||0)+1});Object.entries(byRound).forEach(([round,items])=>{const seen=new Set;items.forEach(match=>[match[0],match[1]].forEach(team=>{if(seen.has(team))issues.push(`第 ${round} 轮：${team} 被安排了两场比赛。`);seen.add(team)}))});Object.entries(pairCounts).forEach(([pair,count])=>{if(count>maxMeetings)issues.push(`${pair.replace('|',' 与 ')} 已安排 ${count} 次交手，超过循环方式限制。`)});return issues}
 function syncEventLifecycle(){if(state.status==='草稿')return;const complete=state.matches.length>0&&state.matches.every(match=>match[5]);state.status=complete?'已完赛':'进行中';$('statusBadge').textContent=state.status;$('publish').textContent=state.status==='已完赛'?'赛事已完赛':'赛事进行中'}
-function autoSaveEvent(){const ok=persistActiveEvent();const save=$('save');if(save)save.title=ok?'已自动保存到本机':'保存失败，请导出备份'}
+function autoSaveEvent(){const ok=persistActiveEvent();const save=$('save');if(save)save.title=ok?(currentUser()?.token?'正在同步到云端':'已自动保存到本机'):'保存失败，请导出备份'}
 function renderEventContext(){let context=$('eventContext');if(!context){document.querySelector('.tabs').insertAdjacentHTML('beforebegin','<div class="event-context" id="eventContext"></div>');context=$('eventContext')}context.innerHTML=`<strong>${state.name} · ${state.groupName}</strong><span>前 ${Math.min(+state.qualifiers||0,state.teams.length)} 名出线</span>`;renderMembers();bindMembers()}
 function renderManualScheduleControls(){const locked=state.status!=='草稿',operator=currentOperator();if(operator?.role!=='创建者')$('schedule').insertAdjacentHTML('afterbegin',`<div class="notice">当前身份：${operator?.name||'协作录入员'} · ${canEditScores()?'可录入、确认和更正本小组比分':'未获当前小组的比分录入权限'}</div>`);document.querySelectorAll('.round').forEach(round=>{const title=round.querySelector('.round-title'),number=+(title.textContent.match(/\d+/)?.[0]||0);if(!locked)title.insertAdjacentHTML('beforeend',`<button class="round-add" data-add-round="${number}" type="button">＋ 添加本轮比赛</button><button class="round-delete" data-delete-round="${number}" type="button">删除本轮</button>`)});document.querySelectorAll('.fixture').forEach(fixture=>{const index=+fixture.querySelector('[data-match]').dataset.match,footer=fixture.querySelector('.fixture-footer');footer.insertAdjacentHTML('afterbegin',`<label class="round-edit">轮次 <input type="number" min="1" data-round="${index}" value="${state.matches[index][4]}" ${locked?'disabled':''}></label>`);if(!locked)footer.insertAdjacentHTML('beforeend',`<button class="fixture-delete" data-delete-fixture="${index}" type="button">删除比赛</button>`)});if(!locked)$('schedule').insertAdjacentHTML('beforeend','<div class="schedule-manual"><button class="secondary" id="addFixture" type="button">＋ 新增轮次比赛</button></div>');applyOperatorAccess();autoSaveEvent()}
 function bindManualScheduleControls(){document.querySelectorAll('[data-round]').forEach(input=>input.onchange=()=>{const round=Math.max(1,+input.value||1);state.matches[+input.dataset.round][4]=round;state.manualOrders={};state.manualDrafts={};render()});document.querySelectorAll('[data-add-round]').forEach(button=>button.onclick=()=>{if(state.teams.length<2)return;state.matches.push([state.teams[0],state.teams[1],'','',+button.dataset.addRound]);state.manualOrders={};state.manualDrafts={};render()});document.querySelectorAll('[data-delete-fixture]').forEach(button=>button.onclick=()=>{const index=+button.dataset.deleteFixture,match=state.matches[index];if(!confirm(`将删除第 ${match[4]} 轮 ${match[0]} vs ${match[1]}，已录入比分也会移除。是否继续？`))return;state.matches.splice(index,1);state.logs.push({time:new Date().toLocaleString('zh-CN',{hour12:false}),match:`第 ${match[4]} 轮 ${match[0]} vs ${match[1]}`,text:'删除比赛'});state.manualOrders={};state.manualDrafts={};render()});document.querySelectorAll('[data-delete-round]').forEach(button=>button.onclick=()=>{const round=+button.dataset.deleteRound,count=state.matches.filter(match=>+match[4]===round).length;if(!confirm(`将删除小组赛第 ${round} 轮的 ${count} 场比赛，已录入的比分也会移除。是否继续？`))return;state.matches=state.matches.filter(match=>+match[4]!==round);state.logs.push({time:new Date().toLocaleString('zh-CN',{hour12:false}),match:`小组赛第 ${round} 轮`,text:`删除本轮 ${count} 场比赛`});state.manualOrders={};state.manualDrafts={};render()});const add=$('addFixture');if(add)add.onclick=()=>{if(state.teams.length<2)return;const nextRound=Math.max(0,...state.matches.map(match=>+match[4]||0))+1;state.matches.push([state.teams[0],state.teams[1],'','',nextRound]);state.manualOrders={};state.manualDrafts={};render()}}
@@ -130,9 +132,12 @@ function renderMembership(){
   const hint=state.billingHint?`<div class="notice">${state.billingHint}</div>`:'';
   const body=rows.map(([name,price,current,scope,content,action])=>`<section class="plan-card price-row ${current?'current':''}"><div><div class="price-kicker">服务方案</div><h3>${name}</h3></div><div><div class="price-kicker">价格</div><div class="plan-price">${price}</div></div><div><div class="price-kicker">创建与管理范围</div><p>${scope}</p></div><div><div class="price-kicker">服务内容</div><p>${content}</p></div><div>${action}</div></section>`).join('');
   const request=state.customRequest;
-  $('membership').innerHTML=`<h2>会员中心</h2>${hint}<div class="notice membership-summary">当前权益：${billingSummary()}</div><div class="plans">${body}</div><p class="price-note">单次服务说明：4.99元解锁当前一个小组的末轮分析。支付前须确认此前各轮赛果；支付后锁定历史赛果及排名相关配置。更新末轮比分、切换关注球队、重新计算，不重复收费。个人包月会员及赛事会员不受上述历史赛果锁定限制。赛事会员权益仅限购买的本届赛事，新一届赛事需另行购买。</p><section class="custom-request" id="customRequest"><h3>赛事规则定制</h3><p>现有五种积分排名方法之外的规则，按需求约定价格。提交后由平台配置、测试，并提供配套文字解释与人工解答。</p><textarea id="customRequestText" placeholder="请描述需要定制的积分与排名规则">${request?.text||''}</textarea><div class="request-state" id="requestState">${request?`需求已记录（${request.time}）。`:'面议，提交后与您确认范围和价格。'}</div><button id="submitCustomRequest" type="button">提交定制需求</button></section>`;
+  const logoutButton=currentUser()?'<div class="account-actions"><button id="logoutMembership" type="button">退出登录</button></div>':'';
+  $('membership').innerHTML=`<h2>会员中心</h2>${logoutButton}${hint}<div class="notice membership-summary">当前权益：${billingSummary()}</div><div class="plans">${body}</div><p class="price-note">单次服务说明：4.99元解锁当前一个小组的末轮分析。支付前须确认此前各轮赛果；支付后锁定历史赛果及排名相关配置。更新末轮比分、切换关注球队、重新计算，不重复收费。个人包月会员及赛事会员不受上述历史赛果锁定限制。赛事会员权益仅限购买的本届赛事，新一届赛事需另行购买。</p><section class="custom-request" id="customRequest"><h3>赛事规则定制</h3><p>现有五种积分排名方法之外的规则，按需求约定价格。提交后由平台配置、测试，并提供配套文字解释与人工解答。</p><textarea id="customRequestText" placeholder="请描述需要定制的积分与排名规则">${request?.text||''}</textarea><div class="request-state" id="requestState">${request?`需求已记录（${request.time}）。`:'面议，提交后与您确认范围和价格。'}</div><button id="submitCustomRequest" type="button">提交定制需求</button></section>`;
 }
 function bindMembership(){
+  const logoutMembership=$('logoutMembership');
+  if(logoutMembership)logoutMembership.onclick=()=>window.PhoneLogin?.logout();
   document.querySelectorAll('[data-buy]').forEach(button=>button.onclick=()=>{
     const kind=button.dataset.buy;
     if(kind==='single'){
@@ -279,7 +284,7 @@ if(('serviceWorker' in navigator)&&(location.protocol==='http:'||location.protoc
   window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));
 }
 function normalizePhone(value){return String(value||'').replace(/\s/g,'')}
-function currentUser(){try{const user=JSON.parse(localStorage.getItem('ranking-user')||'null');return user&&user.phone?user:null}catch{return null}}
+function currentUser(){try{const user=JSON.parse(localStorage.getItem('ranking-user')||'null');return user&&user.phone&&user.verified?user:null}catch{return null}}
 function showAppView(target,requested){
   document.querySelectorAll('.tab').forEach(tab=>tab.classList.toggle('active',tab.dataset.view===target));
   document.querySelector('.tab.active')?.scrollIntoView({inline:'nearest',block:'nearest'});
@@ -307,25 +312,20 @@ function syncPublicationAccess(){
 }
 function saveAccountPlan(plan){try{const user=JSON.parse(localStorage.getItem('ranking-user')||'null');if(!user)return;user.plan=plan;user.updatedAt=new Date().toISOString();localStorage.setItem('ranking-user',JSON.stringify(user))}catch{}}
 function initPhoneLogin(){
-  const actions=document.querySelector('.header-actions');
-  if(!actions||$('accountEntry'))return;
-  actions.insertAdjacentHTML('afterbegin','<button class="secondary account-entry" id="accountEntry" type="button">登录</button>');
-  document.body.insertAdjacentHTML('beforeend','<dialog class="method-dialog login-dialog" id="loginDialog"><div class="dialog-content"><button class="dialog-close" id="closeLoginDialog" type="button" aria-label="关闭">×</button><div id="loginContent"></div></div></dialog>');
-  const renderLogin=()=>{
-    const user=currentUser();
-    $('accountEntry').textContent=user?`账户 · ${user.phone}`:'登录';
-    const planLabel=billingSummary();
-    const loginIntro=(sessionStorage.getItem('ranking-after-login')||'').startsWith('buy:')?'登录后即可继续购买。首次验证手机号后将自动创建账户。':'首次验证手机号后将自动创建账户。';$('loginContent').innerHTML=user?`<h2>账户中心</h2><div class="account-panel"><strong>${user.phone}</strong><p>已通过手机号验证码登录</p><p>当前权益：${planLabel}</p><p>本机赛事：${state.name} · ${state.groups?.length||1} 个小组</p><p>当前为本机演示账户；接入服务后可同步赛事、权益与多设备数据。</p></div><div class="account-actions"><button class="secondary" id="logoutAccount" type="button">退出登录</button></div>`:`<h2>手机号验证码登录</h2><p class="login-intro">${loginIntro}</p><form class="login-form" id="loginForm"><input class="field" id="loginPhone" inputmode="tel" autocomplete="tel" maxlength="11" placeholder="请输入 11 位手机号"><div class="login-code-row"><input class="field" id="loginCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="输入验证码"><button class="secondary" id="sendLoginCode" type="button">获取验证码</button></div><p class="login-hint" id="loginHint"></p><button class="login-submit" type="submit">登录 / 注册</button></form><div class="login-demo">演示环境：当前不发送真实短信。完成后会接入短信服务、验证码校验与安全限流。</div>`;
-    const logout=$('logoutAccount');
-    if(logout)logout.onclick=()=>{localStorage.removeItem('ranking-user');sessionStorage.removeItem('ranking-after-login');renderLogin();$('loginDialog').close();if(!$('membership')?.classList.contains('hidden')){renderMembership();bindMembership()}};
-    const send=$('sendLoginCode');
-    if(send)send.onclick=()=>{const phone=normalizePhone($('loginPhone').value);$('loginHint').textContent=/^1\d{10}$/.test(phone)?'验证码已发送（演示环境不发送真实短信）。':'请输入有效的 11 位手机号。'};
-    const form=$('loginForm');
-    if(form)form.onsubmit=event=>{event.preventDefault();const phone=normalizePhone($('loginPhone').value),code=normalizePhone($('loginCode').value);if(!/^1\d{10}$/.test(phone)){ $('loginHint').textContent='请输入有效的 11 位手机号。';return }if(!/^\d{6}$/.test(code)){ $('loginHint').textContent='请输入 6 位验证码。';return }localStorage.setItem('ranking-user',JSON.stringify({phone,plan:state.plan||'trial',loggedInAt:new Date().toISOString()}));const pending=sessionStorage.getItem('ranking-after-login')||'';sessionStorage.removeItem('ranking-after-login');renderLogin();$('loginDialog').close();if(pending.startsWith('buy:')){const kind=pending.slice(4);showAppView('membership');(kind==='custom'?$('submitCustomRequest'):document.querySelector('[data-buy="'+kind+'"]'))?.click()}};
-  };
-  $('accountEntry').onclick=()=>{renderLogin();$('loginDialog').showModal()};
-  $('closeLoginDialog').onclick=()=>{sessionStorage.removeItem('ranking-after-login');$('loginDialog').close()};
-  renderLogin();
+  PhoneLogin.mount({
+    planLabel:()=>billingSummary(),
+    eventLabel:()=>`${state.name} · ${state.groups?.length||1} 个小组`,
+    plan:()=>state.plan||'trial',
+    continuePurchase(kind){
+      showAppView('membership');
+      (kind==='custom'?$('submitCustomRequest'):document.querySelector('[data-buy="'+kind+'"]'))?.click();
+    },
+    onLogin(){bootCloud()},
+    onSessionChange(){
+      if(!currentUser())window.RankingInstall?.saved(true);
+      if(!$('membership')?.classList.contains('hidden')){renderMembership();bindMembership()}
+    }
+  });
 }
 initPhoneLogin();
 function updateEventIndex(name){
@@ -335,11 +335,85 @@ function updateEventIndex(name){
   localStorage.setItem(EVENT_INDEX_KEY,JSON.stringify(eventIndex));
   localStorage.setItem(ACTIVE_EVENT_KEY,activeEventId);
 }
+let cloudPhase='idle',cloudDirty=false,cloudTimer=0;
+function collectTournamentData(){
+  saveCurrentGroup();
+  const events=eventIndex.map(item=>{
+    let eventState=null;
+    if(item.id===activeEventId)eventState={...state,simulation:{},manualDrafts:{}};
+    else{try{eventState=JSON.parse(localStorage.getItem(`ranking-event:${item.id}`)||'null')}catch{eventState=null}}
+    return {id:item.id,name:item.name,updatedAt:item.updatedAt,state:eventState};
+  }).filter(item=>item.id&&item.state);
+  return {version:1,activeEventId,events};
+}
+function applyTournamentData(data){
+  const events=Array.isArray(data?.events)?data.events.filter(item=>item&&item.id&&item.state&&typeof item.state==='object'):[];
+  if(!events.length)return false;
+  const index=events.map(item=>({id:item.id,name:String(item.name||item.state.name||'未命名赛事'),updatedAt:item.updatedAt||new Date().toISOString()}));
+  const known=new Set(index.map(item=>item.id));
+  eventIndex.forEach(item=>{if(!known.has(item.id))localStorage.removeItem(`ranking-event:${item.id}`)});
+  events.forEach(item=>localStorage.setItem(`ranking-event:${item.id}`,JSON.stringify({...item.state,simulation:{},manualDrafts:{}})));
+  localStorage.setItem(EVENT_INDEX_KEY,JSON.stringify(index));
+  localStorage.setItem(ACTIVE_EVENT_KEY,known.has(data.activeEventId)?data.activeEventId:index[0].id);
+  return true;
+}
+function rememberCloud(user,updatedAt){
+  const owner=user.id||user.phone;
+  localStorage.setItem('ranking-cloud-owner',owner);
+  if(updatedAt)localStorage.setItem('ranking-cloud-revision',owner+':'+updatedAt);
+}
+function scheduleCloudSync(){
+  const user=currentUser();
+  if(!user?.token){window.RankingInstall?.saved(true);return}
+  window.RankingInstall?.cloudStatus?.('同步中...');
+  if(cloudPhase!=='ready'){if(cloudPhase==='pulling')cloudDirty=true;return}
+  clearTimeout(cloudTimer);
+  cloudTimer=setTimeout(()=>pushTournament(),700);
+}
+async function pushTournament(){
+  const user=currentUser();
+  if(!user?.token||!window.RankingCloud){window.RankingInstall?.saved(true);return}
+  window.RankingInstall?.cloudStatus?.('同步中...');
+  const result=await RankingCloud.push({title:state.name,data:collectTournamentData()});
+  if(!currentUser()?.token)return;
+  if(!result.ok){window.RankingInstall?.cloudStatus?.(result.message||'云端同步失败，已保存在本机',true);return}
+  rememberCloud(user,result.tournament?.updatedAt);
+  window.RankingInstall?.cloudStatus?.('已同步到云端');
+  const save=$('save');if(save)save.title='已同步到云端';
+}
+async function bootCloud(){
+  const user=currentUser();
+  if(!user?.token||!window.RankingCloud){cloudPhase='ready';window.RankingInstall?.saved(true);return}
+  cloudPhase='pulling';
+  window.RankingInstall?.cloudStatus?.('同步中...');
+  const result=await RankingCloud.pull();
+  if(!currentUser()?.token){cloudPhase='ready';return}
+  if(!result.ok){cloudPhase='ready';window.RankingInstall?.cloudStatus?.(result.message||'云端读取失败，当前显示本机数据',true);return}
+  const tournament=result.tournament;
+  const owner=user.id||user.phone;
+  const storedOwner=localStorage.getItem('ranking-cloud-owner')||'';
+  if(!tournament){
+    cloudPhase='ready';
+    if(storedOwner&&storedOwner!==owner){window.RankingInstall?.saved(true);return}
+    await pushTournament();
+    return;
+  }
+  const revision=owner+':'+(tournament.updatedAt||'');
+  if(localStorage.getItem('ranking-cloud-revision')!==revision&&applyTournamentData(tournament.data)){
+    rememberCloud(user,tournament.updatedAt);
+    location.reload();
+    return;
+  }
+  rememberCloud(user,tournament.updatedAt);
+  cloudPhase='ready';
+  window.RankingInstall?.cloudStatus?.('已同步到云端');
+  if(cloudDirty){cloudDirty=false;scheduleCloudSync()}
+}
 function persistActiveEvent(){
   try{
     saveCurrentGroup();
     localStorage.setItem(`ranking-event:${activeEventId}`,JSON.stringify({...state,simulation:{},manualDrafts:{}}));
-    updateEventIndex(state.name);window.RankingInstall?.saved(true);return true;
+    updateEventIndex(state.name);scheduleCloudSync();return true;
   }catch(error){window.RankingInstall?.saved(false);return false;}
 }
 function saveImportedActiveEvent(event){
@@ -371,4 +445,5 @@ if(sessionStorage.getItem("ranking-open-simulation")==="1"){sessionStorage.remov
 
 window.RankingInstall.init({save:persistActiveEvent,backup:()=>$('exportEvent').click(),restore:()=>$('importEvent').click()});
 HeaderBar.mount();
+bootCloud();
 </script><script src="src/motion.js?v=7"></script></body></html>

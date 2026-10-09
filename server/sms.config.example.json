@@ -1,0 +1,14 @@
+{
+  "provider": "aliyun",
+  "aliyun": {
+    "accessKeyId": "",
+    "accessKeySecret": "",
+    "signName": "",
+    "templateCode": "",
+    "templateParam": "{\"code\":\"##code##\",\"min\":\"5\"}"
+  },
+  "supabase": {
+    "url": "https://your-project-ref.supabase.co",
+    "serviceRoleKey": ""
+  }
+}

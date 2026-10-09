@@ -61,6 +61,7 @@
       + '<div class="fixture-main">'
       + '<select class="team-select" data-match="' + index + '" data-side="0"' + lock + '>' + options(teams, match[0]) + '</select>'
       + '<div class="score-boxes">'
+      + '<span class="score-caption">比分</span>'
       + '<input class="score-input" inputmode="numeric" aria-label="' + escapeHtml(match[0]) + '比分" data-match="' + index + '" data-score="2" data-slot="home" type="number" min="0" value="' + escapeHtml(match[2]) + '">'
       + '<input class="score-input" inputmode="numeric" aria-label="' + escapeHtml(match[1]) + '比分" data-match="' + index + '" data-score="3" data-slot="away" type="number" min="0" value="' + escapeHtml(match[3]) + '">'
       + '</div>'

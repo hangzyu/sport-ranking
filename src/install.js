@@ -8,6 +8,7 @@ function device(ua=navigator.userAgent){return /MicroMessenger/i.test(ua)?'wecha
 global.addEventListener('beforeinstallprompt',event=>{event.preventDefault();promptEvent=event;if(dialog?.open)paint()});
 global.addEventListener('appinstalled',()=>{promptEvent=null;if(launch)launch.textContent='应用与备份';if(dialog?.open)paint()});
 function saved(ok){saveOK=ok;if(ok)lastSave=new Date();const status=document.getElementById('localSaveStatus');if(status){status.textContent=ok?'已保存到本机':'保存失败，请立即导出备份';status.dataset.failed=String(!ok)}}
+function cloudStatus(text,failed){const status=document.getElementById('localSaveStatus');if(!status)return;status.textContent=text;status.dataset.failed=String(!!failed)}
 async function backup(blob,filename){
  try{
   const file=new File([blob],filename,{type:'application/json'});
@@ -34,7 +35,7 @@ function paint(){
  }
  const url=make('input');url.readOnly=true;url.value=new URL('./index.html',location.href).href;url.setAttribute('aria-label',text('网站链接','網站連結'));const copy=make('button',text('复制链接','複製連結'));copy.className='secondary';copy.onclick=async()=>{try{await navigator.clipboard.writeText(url.value);copy.textContent=text('已复制','已複製')}catch{url.select();copy.textContent=text('请长按链接复制','請長按連結複製')}};body.append(url,copy);
  body.append(make('h3',text('先备份，再换设备或浏览器','先備份，再更換裝置或瀏覽器')));
- body.append(make('p',text('赛事仅保存在本机，尚无云端同步。安装后的窗口与原浏览器可能不共享数据；请先导出备份，再到新窗口导入。清除浏览器数据可能丢失赛事。','賽事只儲存在本機，尚無雲端同步。安裝後的視窗與原瀏覽器可能不共用資料；請先匯出備份，再到新視窗匯入。清除瀏覽器資料可能遺失賽事。')));
+ body.append(make('p',global.currentUser?.()?.token?text('已登录。赛事会同步到云端，仍建议定期导出备份。清除浏览器数据后，重新登录可取回已同步的赛事。','已登入。賽事會同步到雲端，仍建議定期匯出備份。清除瀏覽器資料後，重新登入可取回已同步的賽事。'):text('未登录时赛事只保存在本机。登录后会同步到云端。安装后的窗口与原浏览器可能不共享未登录的数据，换设备前请先导出备份。','未登入時賽事只儲存在本機。登入後會同步到雲端。安裝後的視窗與原瀏覽器可能不共用未登入的資料，更換裝置前請先匯出備份。')));
  const buttons=make('div');buttons.className='install-actions';
  for(const [cn,hk,fn]of [['导出当前赛事','匯出目前賽事',()=>callbacks.backup()],['导入备份','匯入備份',()=>{dialog.close();callbacks.restore()}]]){const b=make('button',text(cn,hk));b.className='secondary';b.onclick=fn;buttons.append(b)}body.append(buttons);
  body.append(make('p',saveOK?(lastSave?text('最近保存：','最近儲存：')+lastSave.toLocaleTimeString():text('使用页面顶部的“保存赛事”保存。','使用頁面頂部的「保存赛事」儲存。')):text('保存失败，请先导出备份，避免刷新丢失修改。','儲存失敗，請先匯出備份，避免重新整理遺失修改。')));
@@ -49,5 +50,5 @@ function init(options){callbacks=options;const actions=document.querySelector('.
  dialog=make('dialog');dialog.className='install-dialog';dialog.setAttribute('aria-label','安装 Ranking 与赛事备份');const close=make('button','×');close.className='install-close secondary';close.setAttribute('aria-label','关闭');close.onclick=()=>dialog.close();body=make('div');dialog.append(close,body);document.body.append(dialog);
  global.addEventListener('online',()=>{if(dialog.open)paint()});global.addEventListener('offline',()=>{if(dialog.open)paint()});
 }
-global.RankingInstall={init,saved,backup,device};
+global.RankingInstall={init,saved,cloudStatus,backup,device};
 })(globalThis);
