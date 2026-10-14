@@ -438,16 +438,16 @@ button{
   box-shadow:none;
   transition:transform 340ms var(--press),background-color 340ms var(--silk),border-color 340ms var(--silk),color 340ms var(--silk),box-shadow 340ms var(--silk);
 }
-button:hover:not(:active){transform:none;filter:none;box-shadow:none;background:light-dark(#1a46e0,#6b93ff)}
-button:active:not(:disabled):not(.sidebar-collapse-toggle){transform:scale(.96);filter:none}
+button:hover:not(:active):not(.collapse-toggle):not(.sidebar-collapse-toggle){transform:none;filter:none;box-shadow:none;background:light-dark(#1a46e0,#6b93ff)}
+button:active:not(:disabled):not(.collapse-toggle):not(.sidebar-collapse-toggle){transform:scale(.96);filter:none}
 button:disabled,button:disabled:hover{transform:none;filter:none;opacity:1;background:transparent;color:var(--muted);border-color:var(--line);box-shadow:none}
-.secondary,.round-add,.round-delete,.fixture-delete,.member-remove,.team-remove,.dialog-close,.info,.install-close,.sidebar-collapse-toggle,.group-add{
+.secondary,.round-add,.round-delete,.fixture-delete,.member-remove,.team-remove,.dialog-close,.info,.install-close,.group-add{
   color:var(--ink);
   background:transparent;
   border:1px solid var(--line);
   box-shadow:none;
 }
-.secondary:hover,.round-add:hover,.round-delete:hover,.fixture-delete:hover,.member-remove:hover,.team-remove:hover,.dialog-close:hover,.info:hover,.install-close:hover,.sidebar-collapse-toggle:hover,.group-add:hover{
+.secondary:hover,.round-add:hover,.round-delete:hover,.fixture-delete:hover,.member-remove:hover,.team-remove:hover,.dialog-close:hover,.info:hover,.install-close:hover,.group-add:hover{
   background:transparent;
   border-color:var(--ink);
 }
@@ -521,13 +521,113 @@ button:disabled,button:disabled:hover{transform:none;filter:none;opacity:1;backg
 .plan-card.current::before{background:rgb(239 246 255 / 0.72)}
 .trace div{background:transparent;border-left-color:var(--brand)}
 
+/* Collapse arrows: lock translate on every state so hover never jumps */
+button.collapse-toggle,
+button.sidebar-collapse-toggle,
+.collapse-toggle,
 .sidebar-collapse-toggle{
+  position:fixed;
+  z-index:20;
+  top:50%;
+  right:auto;
+  box-sizing:border-box;
+  width:28px;
+  height:44px;
+  margin:0;
+  padding:0;
+  border:1px solid var(--glass-edge);
+  border-radius:999px;
   background:var(--glass);
   color:var(--ink);
-  border:1px solid var(--glass-edge);
   box-shadow:var(--shadow);
   backdrop-filter:blur(16px);
   -webkit-backdrop-filter:blur(16px);
+  font-size:18px;
+  line-height:1;
+  transform:translate(-50%,-50%) !important;
+  transform-origin:center center;
+  transition:background-color 200ms var(--silk),border-color 200ms var(--silk),box-shadow 200ms var(--silk),color 200ms var(--silk);
+}
+button.collapse-toggle:hover,
+button.collapse-toggle:focus,
+button.collapse-toggle:focus-visible,
+button.collapse-toggle:active,
+button.sidebar-collapse-toggle:hover,
+button.sidebar-collapse-toggle:focus,
+button.sidebar-collapse-toggle:focus-visible,
+button.sidebar-collapse-toggle:active,
+.grid.sidebar-collapsed button.sidebar-collapse-toggle,
+.grid.sidebar-collapsed button.sidebar-collapse-toggle:hover,
+.grid.sidebar-collapsed button.sidebar-collapse-toggle:focus,
+.grid.sidebar-collapsed button.sidebar-collapse-toggle:focus-visible,
+.grid.sidebar-collapsed button.sidebar-collapse-toggle:active{
+  top:50%;
+  transform:translate(-50%,-50%) !important;
+  background:var(--glass);
+  border-color:var(--ink);
+  color:var(--ink);
+  box-shadow:var(--shadow);
+  filter:none;
+}
+button.collapse-toggle:hover:not(:active),
+button.sidebar-collapse-toggle:hover:not(:active){
+  transform:translate(-50%,-50%) scale(1.05) !important;
+}
+button.collapse-toggle::after,
+button.sidebar-collapse-toggle::after{
+  content:attr(aria-label);
+  position:absolute;
+  top:calc(100% + 8px);
+  left:50%;
+  z-index:1;
+  width:max-content;
+  max-width:160px;
+  margin:0;
+  padding:5px 8px;
+  border:1px solid var(--glass-edge);
+  border-radius:8px;
+  background:rgb(255 255 255 / 0.96);
+  color:var(--ink);
+  box-shadow:0 8px 20px rgb(8 20 80 / 0.14);
+  font-family:var(--font-ui);
+  font-size:11px;
+  font-weight:650;
+  line-height:1.35;
+  white-space:nowrap;
+  pointer-events:none;
+  opacity:0;
+  transform:translateX(-50%);
+  transition:opacity 160ms var(--silk);
+}
+button.collapse-toggle:hover::after,
+button.collapse-toggle:focus-visible::after,
+button.sidebar-collapse-toggle:hover::after,
+button.sidebar-collapse-toggle:focus-visible::after{
+  opacity:1;
+}
+@media(max-width:760px){
+  button.collapse-toggle,
+  button.sidebar-collapse-toggle,
+  button.collapse-toggle:hover,
+  button.collapse-toggle:focus,
+  button.collapse-toggle:focus-visible,
+  button.collapse-toggle:active,
+  button.sidebar-collapse-toggle:hover,
+  button.sidebar-collapse-toggle:focus,
+  button.sidebar-collapse-toggle:focus-visible,
+  button.sidebar-collapse-toggle:active,
+  .grid.sidebar-collapsed button.sidebar-collapse-toggle,
+  .grid.sidebar-collapsed button.sidebar-collapse-toggle:hover,
+  .grid.sidebar-collapsed button.sidebar-collapse-toggle:focus,
+  .grid.sidebar-collapsed button.sidebar-collapse-toggle:focus-visible,
+  .grid.sidebar-collapsed button.sidebar-collapse-toggle:active{
+    top:50%;
+    transform:translate(-50%,-50%) !important;
+  }
+  button.collapse-toggle:hover:not(:active),
+  button.sidebar-collapse-toggle:hover:not(:active){
+    transform:translate(-50%,-50%) scale(1.05) !important;
+  }
 }
 
 dialog,.method-dialog,.install-dialog{border-radius:16px;color:var(--ink);background:transparent;box-shadow:var(--shadow)}
