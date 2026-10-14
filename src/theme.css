@@ -334,7 +334,6 @@ header.site-header{
   color:var(--muted) !important;
 }
 .nav-tool,
-#installRanking.nav-tool,
 #save.nav-tool,
 #exportEvent.nav-tool,
 #importEvent.nav-tool{
@@ -351,7 +350,6 @@ header.site-header{
   white-space:nowrap;
 }
 .nav-tool:hover,
-#installRanking.nav-tool:hover,
 #save.nav-tool:hover,
 #exportEvent.nav-tool:hover,
 #importEvent.nav-tool:hover{

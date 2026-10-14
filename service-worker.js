@@ -1,4 +1,4 @@
-const CACHE_NAME='ranking-shell-v38-light';
+const CACHE_NAME='ranking-shell-v39-light';
 const APP_SHELL=['./','./index.html','./login.html','./register.html','./manifest.webmanifest','./src/install.js','./src/install.css','./assets/icon-192.png','./assets/icon-512.png','./assets/icon-180.png','./assets/icon-maskable-512.png','./assets/ranking-logo-v1.png','./assets/pitch.svg','./assets/ball.svg','./assets/flag.svg','./assets/goal.svg',
   './src/billing.js','./src/ranking-core.js','./src/qualification-engine.js','./src/score-table.js','./src/event-settings.js','./src/qualification-panel.js','./src/header-bar.js','./src/phone-login.js','./src/cloud-sync.js','./src/fixture-board.js','./src/fixture-board.css','./src/qualification.css','./src/theme.css','./src/login-page.css','./src/motion.js','./src/qualification-worker.js'];
 

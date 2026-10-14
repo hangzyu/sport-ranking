@@ -28,13 +28,14 @@
     byId('publish')?.classList.add('nav-primary');
     byId('publish')?.classList.remove('secondary');
 
-    ['installRanking', 'save', 'exportEvent', 'importEvent'].forEach(id => {
+    ['save', 'exportEvent', 'importEvent'].forEach(id => {
       const el = byId(id);
       if (!el) return;
       el.classList.add('nav-tool');
       el.classList.remove('secondary');
     });
 
+    byId('installRanking')?.remove();
     byId('moreMenu')?.remove();
     byId('moreActions')?.remove();
     byId('morePanel')?.remove();
@@ -51,7 +52,6 @@
       'statusBadge',
       'eventManager',
       'membershipEntry',
-      'installRanking',
       'save',
       'exportEvent',
       'importEvent',

@@ -1,12 +1,12 @@
 (function(global){
 'use strict';
-let promptEvent=null,callbacks={},lastSave=null,saveOK=true,dialog,body,launch,traditional=false;
+let promptEvent=null,callbacks={},lastSave=null,saveOK=true,dialog,body,traditional=false;
 const standalone=()=>global.matchMedia?.('(display-mode: standalone)').matches||navigator.standalone===true;
 const text=(cn,hk)=>traditional?hk:cn;
 function make(tag,value){const e=document.createElement(tag);if(value!==undefined)e.textContent=value;return e}
 function device(ua=navigator.userAgent){return /MicroMessenger/i.test(ua)?'wechat':/iPhone|iPad|iPod/i.test(ua)||navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1?'ios':/Android|HarmonyOS/i.test(ua)?'android':'desktop'}
 global.addEventListener('beforeinstallprompt',event=>{event.preventDefault();promptEvent=event;if(dialog?.open)paint()});
-global.addEventListener('appinstalled',()=>{promptEvent=null;if(launch)launch.textContent='应用与备份';if(dialog?.open)paint()});
+global.addEventListener('appinstalled',()=>{promptEvent=null;if(dialog?.open)paint()});
 function saved(ok){saveOK=ok;if(ok)lastSave=new Date();const status=document.getElementById('localSaveStatus');if(status){status.textContent=ok?'已保存到本机':'保存失败，请立即导出备份';status.dataset.failed=String(!ok)}}
 function cloudStatus(text,failed){const status=document.getElementById('localSaveStatus');if(!status)return;status.textContent=text;status.dataset.failed=String(!!failed)}
 async function backup(blob,filename){
@@ -44,8 +44,7 @@ function paint(){
  body.append(make('p',navigator.onLine?text('当前在线。离线时仅能使用已经缓存的功能；首次使用出线推演需要联网加载组件。','目前在線。離線時只能使用已快取的功能；首次使用出線推演需要連線載入元件。'):text('当前离线。仅能使用已缓存的功能；请联网后检查更新。','目前離線。只能使用已快取的功能；請連線後檢查更新。')));
  const update=make('button',text('保存并检查更新','儲存並檢查更新'));update.onclick=async()=>{if(!callbacks.save()){paint();return}update.disabled=true;try{const reg=await navigator.serviceWorker?.getRegistration();if(reg)await reg.update();update.textContent=text('已保存，点击重新打开','已儲存，點擊重新開啟');update.disabled=false;update.onclick=()=>{if(callbacks.save())location.reload()}}catch{update.disabled=false;update.textContent=text('检查失败，请联网后重试','檢查失敗，請連線後重試')}};body.append(update);
 }
-function init(options){callbacks=options;const actions=document.querySelector('.header-actions');if(!actions)return;
- launch=make('button',standalone()?'应用与备份':'安装 Ranking');launch.id='installRanking';launch.className='secondary';launch.onclick=()=>{paint();dialog.showModal()};actions.prepend(launch);
+function init(options){callbacks=options;
  let status=document.getElementById('localSaveStatus');
  if(!status){
   status=make('span');status.id='localSaveStatus';status.setAttribute('role','status');status.className='save-status sr-only';status.hidden=true;document.body.append(status);
