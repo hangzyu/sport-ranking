@@ -63,12 +63,24 @@ function loadConfig() {
 const pendingOutIds = new Map();
 let dypns;
 
+const ALIYUN_TIMEOUT_MESSAGE = '连接阿里云短信服务超时，请检查本机代理或网络环境后重试';
+
+function isNetworkTimeout(error) {
+  const name = String(error?.name || '');
+  const code = String(error?.code || error?.data?.Code || error?.data?.code || '');
+  const message = String(error?.message || error?.data?.Message || error?.data?.message || '');
+  return /RequestTimeoutError|ConnectTimeout|ReadTimeout|TimeoutError|ETIMEDOUT|ESOCKETTIMEDOUT|UND_ERR_CONNECT_TIMEOUT|UND_ERR_HEADERS_TIMEOUT/i.test(name + ' ' + code + ' ' + message)
+    || /connect.?timeout|read.?timeout|timed?\s*out|超时/i.test(message);
+}
+
 function dypnsClient(config) {
   if (!dypns) {
     dypns = new Dypnsapi.default(new OpenApi.Config({
       accessKeyId: config.aliyun.accessKeyId,
       accessKeySecret: config.aliyun.accessKeySecret,
-      endpoint: 'dypnsapi.aliyuncs.com'
+      endpoint: 'dypnsapi.aliyuncs.com',
+      connectTimeout: 10000,
+      readTimeout: 10000
     }));
   }
   return dypns;
@@ -129,10 +141,16 @@ async function sendDypnsCode(config, phone) {
   } catch (error) {
     failed = true;
     logAliyunError('SendSmsVerifyCode 请求失败', error);
+    if (isNetworkTimeout(error)) {
+      return {status: 504, body: {ok: false, error: 'timeout', message: ALIYUN_TIMEOUT_MESSAGE}};
+    }
     body = thrownBody(error);
   }
   if (body.code !== 'OK') {
     if (!failed) console.error('SendSmsVerifyCode 返回异常', body);
+    if (isNetworkTimeout(body)) {
+      return {status: 504, body: {ok: false, error: 'timeout', message: ALIYUN_TIMEOUT_MESSAGE}};
+    }
     const limited = /BUSINESS_LIMIT|FREQUENCY|频繁/.test(String(body.code) + String(body.message));
     return {status: limited ? 429 : 502, body: {ok: false, error: limited ? 'cooldown' : 'sms_failed', message: aliyunMessage(body, '短信发送失败，请稍后再试。'), retryAfter: limited ? 60 : undefined}};
   }
@@ -156,12 +174,18 @@ async function checkDypnsCode(config, phone, code) {
   } catch (error) {
     failed = true;
     logAliyunError('CheckSmsVerifyCode 请求失败', error);
+    if (isNetworkTimeout(error)) {
+      return {ok: false, error: 'timeout', message: ALIYUN_TIMEOUT_MESSAGE};
+    }
     body = thrownBody(error);
   }
   if (body.code && body.code !== 'OK' && !failed) console.error('CheckSmsVerifyCode 返回异常', body);
   if (body.code === 'OK' && body.model?.verifyResult === 'PASS') {
     pendingOutIds.delete(phone);
     return {ok: true, phone};
+  }
+  if (isNetworkTimeout(body)) {
+    return {ok: false, error: 'timeout', message: ALIYUN_TIMEOUT_MESSAGE};
   }
   return {ok: false, error: 'mismatch', message: body.code && body.code !== 'OK' ? aliyunMessage(body, '验证码不正确或已过期。') : '验证码不正确或已过期。'};
 }
@@ -237,6 +261,36 @@ async function saveUserPassword(config, userId, body) {
     throw new Error('无法保存密码。');
   }
   return {ok: true, hasPassword: true};
+}
+
+async function registerWithPassword(config, phone, password) {
+  const problem = passwordError(password);
+  if (problem) return {ok: false, status: 400, error: 'invalid_password', message: problem};
+  const supabase = supabaseClient(config);
+  const loggedInAt = new Date().toISOString();
+  const hash = await hashPassword(password);
+  const existing = await supabase.from('users').select('id, phone, created_at, password_hash').eq('phone', phone).maybeSingle();
+  if (existing.error) {
+    console.error('注册读取用户失败', existing.error);
+    return {ok: false, status: 502, error: 'user_failed', message: '暂时无法注册，请稍后再试。'};
+  }
+  if (existing.data?.password_hash) {
+    return {ok: false, status: 400, error: 'exists', message: '该手机号已注册，请直接登录。'};
+  }
+  if (existing.data) {
+    const updated = await supabase.from('users').update({password_hash: hash, last_login_at: loggedInAt}).eq('id', existing.data.id).select('id, phone, created_at, last_login_at, password_hash').single();
+    if (updated.error) {
+      console.error('注册更新用户失败', updated.error);
+      return {ok: false, status: 502, error: 'user_failed', message: '暂时无法注册，请稍后再试。'};
+    }
+    return {ok: true, user: publicProfile(updated.data, loggedInAt)};
+  }
+  const created = await supabase.from('users').insert({phone, password_hash: hash, last_login_at: loggedInAt}).select('id, phone, created_at, last_login_at, password_hash').single();
+  if (created.error) {
+    console.error('注册创建用户失败', created.error);
+    return {ok: false, status: 502, error: 'user_failed', message: '暂时无法注册，请稍后再试。'};
+  }
+  return {ok: true, user: publicProfile(created.data, loggedInAt)};
 }
 
 function smsbaoPassword(password) {
@@ -410,7 +464,10 @@ function createAuth(options) {
       const normalized = normalizePhone(phone);
       if (!isMobile(normalized)) return {status: 400, body: {ok: false, error: 'invalid_phone', message: '请输入有效的 11 位手机号。'}};
       const checked = await options.checkSms(normalized, String(code || '').replace(/\D/g, ''));
-      if (!checked.ok) return {status: 400, body: {ok: false, error: checked.error, message: checked.message}};
+      if (!checked.ok) {
+        const timeout = checked.error === 'timeout';
+        return {status: timeout ? 504 : 400, body: {ok: false, error: checked.error, message: checked.message}};
+      }
       let profile;
       try {
         profile = options.settleUser ? await options.settleUser(checked.phone) : null;
@@ -445,7 +502,38 @@ function createAuth(options) {
     return {status: 200, body: {ok: true, token: signSession(result.user.phone, secret, now() + 30 * DAY_SECONDS * 1000, result.user.id), user: {...result.user, loggedInAt, hasPassword: true}}};
   }
 
-  return {send, verify, login};
+  async function register({phone, password, code, ip}) {
+    if (!allow(ip || 'local', 20)) return {status: 429, body: {ok: false, error: 'ip_limit', message: '尝试过于频繁，请稍后再试。'}};
+    const normalized = normalizePhone(phone);
+    if (!isMobile(normalized)) return {status: 400, body: {ok: false, error: 'invalid_phone', message: '请输入有效的 11 位手机号。'}};
+    const problem = passwordError(password);
+    if (problem) return {status: 400, body: {ok: false, error: 'invalid_password', message: problem}};
+    const otp = String(code || '').replace(/\D/g, '');
+    if (!/^\d{6}$/.test(otp)) return {status: 400, body: {ok: false, error: 'invalid_code', message: '请输入 6 位验证码。'}};
+    if (!options.registerUser) return {status: 503, body: {ok: false, error: 'unconfigured', message: '注册尚未配置。'}};
+    if (options.checkSms) {
+      const checked = await options.checkSms(normalized, otp);
+      if (!checked.ok) {
+        const timeout = checked.error === 'timeout';
+        return {status: timeout ? 504 : 400, body: {ok: false, error: checked.error, message: checked.message}};
+      }
+    } else {
+      const result = await store.check(normalized, otp);
+      if (!result.ok) return {status: 400, body: {ok: false, error: result.error, message: result.message, attemptsLeft: result.attemptsLeft}};
+    }
+    let result;
+    try {
+      result = await options.registerUser(normalized, String(password));
+    } catch (error) {
+      console.error('注册失败', error);
+      return {status: 502, body: {ok: false, error: 'user_failed', message: '暂时无法注册，请稍后再试。'}};
+    }
+    if (!result.ok) return {status: result.status || 400, body: {ok: false, error: result.error, message: result.message || '注册失败，请稍后再试。'}};
+    const loggedInAt = result.user.loggedInAt || new Date(now()).toISOString();
+    return {status: 200, body: {ok: true, token: signSession(result.user.phone, secret, now() + 30 * DAY_SECONDS * 1000, result.user.id), user: {...result.user, loggedInAt, hasPassword: true}}};
+  }
+
+  return {send, verify, login, register};
 }
 
 const TYPES = {'.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.json': 'application/json; charset=utf-8', '.webmanifest': 'application/manifest+json', '.txt': 'text/plain; charset=utf-8'};
@@ -539,6 +627,18 @@ function createServer(auth, options = {}) {
       }
       return;
     }
+    if (request.method === 'POST' && url.pathname === '/api/auth/register') {
+      let body = {};
+      try {
+        body = await readBody(request, 2048);
+      } catch (error) {
+        sendJson(response, error.status || 400, {ok: false, message: error.status === 413 ? '请求内容过大。' : '请求格式不正确。'});
+        return;
+      }
+      const result = await auth.register({phone: body.phone, password: body.password, code: body.code, ip: request.socket.remoteAddress || 'local'});
+      sendJson(response, result.status, result.body);
+      return;
+    }
     if (request.method === 'POST' && (url.pathname === '/api/auth/password/login' || url.pathname === '/api/auth/password')) {
       let body = {};
       try {
@@ -615,6 +715,7 @@ function listen(port = Number(process.env.PORT) || 8787, host = process.env.HOST
     checkSms: ready ? (phone, code) => checkDypnsCode(config, phone, code) : null,
     settleUser: ready ? phone => settleLogin(config, phone) : null,
     loginPassword: (phone, password) => loginWithPassword(config, phone, password),
+    registerUser: (phone, password) => registerWithPassword(config, phone, password),
     secret: config.secret
   });
   const server = createServer(auth, {

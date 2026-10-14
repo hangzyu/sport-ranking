@@ -1,4 +1,4 @@
-/* Top bar: one solid primary action, secondary actions as ghosts, backups in a menu. */
+/* Slim single-row header: ghost links, flat tools, primary publish, capsule account. */
 (function (root) {
   function byId(id) {
     return document.getElementById(id);
@@ -6,46 +6,61 @@
 
   function mount() {
     const actions = document.querySelector('.header-actions');
-    if (!actions || byId('moreActions')) return;
+    if (!actions || actions.dataset.headerBarMounted === '1') return;
+    actions.dataset.headerBarMounted = '1';
+
     if (!byId('membershipEntry')) {
       const entry = document.createElement('button');
-      entry.className = 'secondary';
+      entry.className = 'nav-ghost';
       entry.id = 'membershipEntry';
       entry.type = 'button';
       entry.dataset.view = 'membership';
       entry.textContent = '会员中心';
       actions.append(entry);
     }
+
+    byId('eventManager')?.classList.add('nav-ghost');
+    byId('eventManager')?.classList.remove('secondary');
+    byId('membershipEntry')?.classList.add('nav-ghost');
+    byId('membershipEntry')?.classList.remove('secondary');
+    byId('accountEntry')?.classList.add('account-capsule');
+    byId('accountEntry')?.classList.remove('secondary');
+    byId('publish')?.classList.add('nav-primary');
     byId('publish')?.classList.remove('secondary');
-    ['save', 'exportEvent', 'importEvent', 'installRanking', 'eventManager', 'accountEntry', 'membershipEntry', 'publicPreview'].forEach(id => {
-      byId(id)?.classList.add('secondary');
-    });
-    actions.insertAdjacentHTML('beforeend', '<div class="more-menu" id="moreMenu"><button class="secondary" id="moreActions" type="button" aria-haspopup="menu" aria-expanded="false">更多操作</button><div class="more-panel" id="morePanel" role="menu" hidden></div></div>');
-    const panel = byId('morePanel');
-    const more = byId('moreActions');
-    ['save', 'exportEvent', 'importEvent'].forEach(id => {
+
+    ['installRanking', 'save', 'exportEvent', 'importEvent'].forEach(id => {
       const el = byId(id);
-      if (el) panel.append(el);
+      if (!el) return;
+      el.classList.add('nav-tool');
+      el.classList.remove('secondary');
     });
-    ['statusBadge', 'installRanking', 'eventManager', 'accountEntry', 'membershipEntry', 'publicPreview', 'localSaveStatus', 'moreMenu', 'publish', 'importEventFile'].forEach(id => {
+
+    byId('moreMenu')?.remove();
+    byId('moreActions')?.remove();
+    byId('morePanel')?.remove();
+    byId('publicPreview')?.remove();
+
+    const saveStatus = byId('localSaveStatus');
+    if (saveStatus) {
+      saveStatus.hidden = true;
+      saveStatus.classList.add('sr-only');
+      document.body.append(saveStatus);
+    }
+
+    [
+      'statusBadge',
+      'eventManager',
+      'membershipEntry',
+      'installRanking',
+      'save',
+      'exportEvent',
+      'importEvent',
+      'publish',
+      'accountEntry',
+      'importEventFile'
+    ].forEach(id => {
       const el = byId(id);
       if (el) actions.append(el);
-    });
-    const close = () => {
-      panel.hidden = true;
-      more.setAttribute('aria-expanded', 'false');
-    };
-    more.onclick = event => {
-      event.stopPropagation();
-      const open = panel.hidden;
-      panel.hidden = !open;
-      more.setAttribute('aria-expanded', String(open));
-    };
-    panel.addEventListener('click', event => {
-      if (event.target.closest('button')) close();
-    });
-    document.addEventListener('click', event => {
-      if (!event.target.closest('#moreMenu')) close();
     });
   }
 

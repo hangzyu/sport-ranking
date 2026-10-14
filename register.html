@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#245bff">
+  <title>注册 · Ranking</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700;800&family=Barlow+Condensed:wght@600;700;800&family=Outfit:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="src/install.css">
+  <link rel="stylesheet" href="src/theme.css?v=27">
+  <link rel="stylesheet" href="src/login-page.css?v=7">
+  <link rel="apple-touch-icon" href="assets/icon-180.png">
+</head>
+<body>
+  <div class="stadium" aria-hidden="true"><div class="pitch"></div></div>
+  <div class="login-page login-overlay" id="registerPageRoot">
+    <div class="login-page-shell">
+      <div class="login-page-brand">
+        <img src="assets/ranking-logo-v1.png" alt="">
+        <h1>Ranking</h1>
+      </div>
+      <section class="login-page-card">
+        <div id="registerContent"></div>
+      </section>
+      <a class="login-page-back" href="login.html">← 返回登录</a>
+    </div>
+  </div>
+  <script src="src/phone-login.js?v=6"></script>
+  <script>
+    function currentUser(){
+      try{
+        const user=JSON.parse(localStorage.getItem('ranking-user')||'null');
+        return user&&user.phone&&user.verified?user:null;
+      }catch{return null}
+    }
+    PhoneLogin.mount({
+      page:'register',
+      plan(){
+        try{return currentUser()?.plan||'trial'}catch{return 'trial'}
+      }
+    });
+  </script>
+</body>
+</html>

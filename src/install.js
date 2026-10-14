@@ -46,7 +46,11 @@ function paint(){
 }
 function init(options){callbacks=options;const actions=document.querySelector('.header-actions');if(!actions)return;
  launch=make('button',standalone()?'应用与备份':'安装 Ranking');launch.id='installRanking';launch.className='secondary';launch.onclick=()=>{paint();dialog.showModal()};actions.prepend(launch);
- const status=make('span');status.id='localSaveStatus';status.setAttribute('role','status');status.className='save-status';actions.append(status);saved(saveOK);
+ let status=document.getElementById('localSaveStatus');
+ if(!status){
+  status=make('span');status.id='localSaveStatus';status.setAttribute('role','status');status.className='save-status sr-only';status.hidden=true;document.body.append(status);
+ }
+ saved(saveOK);
  dialog=make('dialog');dialog.className='install-dialog';dialog.setAttribute('aria-label','安装 Ranking 与赛事备份');const close=make('button','×');close.className='install-close secondary';close.setAttribute('aria-label','关闭');close.onclick=()=>dialog.close();body=make('div');dialog.append(close,body);document.body.append(dialog);
  global.addEventListener('online',()=>{if(dialog.open)paint()});global.addEventListener('offline',()=>{if(dialog.open)paint()});
 }

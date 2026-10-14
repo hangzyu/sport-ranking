@@ -1,7 +1,8 @@
-/* Phone login. A code is accepted only after the SMS service has issued and checked it. */
+/* Phone login / register. A code is accepted only after the SMS service has issued and checked it. */
 (function (root) {
   const SEND = 'api/auth/sms/send';
   const VERIFY = 'api/auth/sms/verify';
+  const REGISTER = 'api/auth/register';
   const PASSWORD_LOGIN = 'api/auth/password/login';
   const PASSWORD_SAVE = 'api/auth/password';
   const PURCHASES = {single: true, monthly: true, event: true, custom: true};
@@ -11,6 +12,8 @@
   let verifying = false;
   let loginMode = 'sms';
   let options = {};
+  let pageMode = false;
+  let registerMode = false;
 
   function byId(id) {
     return document.getElementById(id);
@@ -20,14 +23,34 @@
     return String(text ?? '').replace(/[&<>"']/g, char => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[char]));
   }
 
+  function loginHref() {
+    return new URL('login.html', document.baseURI).href;
+  }
+
+  function registerHref() {
+    return new URL('register.html', document.baseURI).href;
+  }
+
+  function homeHref() {
+    return new URL('index.html', document.baseURI).href;
+  }
+
   function endpoint(path) {
     const configured = localStorage.getItem('ranking-auth-api') || '';
     if (!configured) return new URL(path, document.baseURI).href;
     return configured.replace(/\/$/, '') + '/' + path;
   }
 
+  function phoneField() {
+    return byId('loginPhone') || byId('registerPhone');
+  }
+
+  function codeSendButton() {
+    return byId('sendLoginCode') || byId('sendRegisterCode');
+  }
+
   function setHint(text, kind) {
-    const hint = byId('loginHint');
+    const hint = byId('loginHint') || byId('registerHint');
     if (!hint) return;
     hint.textContent = text || '';
     hint.classList.toggle('is-error', kind === 'error');
@@ -35,9 +58,9 @@
   }
 
   function paintSendButton() {
-    const button = byId('sendLoginCode');
+    const button = codeSendButton();
     if (!button) return;
-    const phone = normalizePhone(byId('loginPhone')?.value);
+    const phone = normalizePhone(phoneField()?.value);
     const left = Math.ceil(((cooldowns.get(phone) || 0) - Date.now()) / 1000);
     if (sending) {
       button.disabled = true;
@@ -92,33 +115,65 @@
     return String(value || '').replace(/\D/g, '').replace(/^86(?=1[3-9]\d{9}$)/, '');
   }
 
+  function openLoginPage() {
+    location.href = loginHref();
+  }
+
+  function openRegisterPage() {
+    location.href = registerHref();
+  }
+
+  function returnAfterLogin() {
+    const pending = sessionStorage.getItem('ranking-after-login') || '';
+    sessionStorage.removeItem('ranking-after-login');
+    const url = new URL('index.html', document.baseURI);
+    if (pending.startsWith('buy:')) {
+      const kind = pending.slice(4);
+      if (PURCHASES[kind]) {
+        sessionStorage.setItem('ranking-open-membership', kind);
+        url.searchParams.set('view', 'membership');
+      }
+    }
+    location.href = url.href;
+  }
+
   function signOut() {
     localStorage.removeItem('ranking-user');
     sessionStorage.removeItem('ranking-after-login');
-    renderLogin();
-    byId('loginDialog')?.close();
+    stopTick();
     options.onSessionChange?.();
+    if (pageMode || registerMode) {
+      if (registerMode) renderRegister();
+      else renderLogin();
+      return;
+    }
+    const entry = byId('accountEntry');
+    if (entry) entry.textContent = '登录';
+  }
+
+  function registerLinkHtml() {
+    return '<p class="login-register-link"><a href="register.html" id="goRegister">新用户注册</a></p>';
   }
 
   function renderLogin() {
     const user = root.currentUser?.() || null;
     const entry = byId('accountEntry');
     if (entry) entry.textContent = user ? '账户 · ' + user.phone : '登录';
-    const buying = (sessionStorage.getItem('ranking-after-login') || '').startsWith('buy:');
-    const intro = buying ? '登录后即可继续购买。首次验证手机号后将自动创建账户。' : '首次验证手机号后将自动创建账户。';
     const content = byId('loginContent');
     if (!content) return;
+    const buying = (sessionStorage.getItem('ranking-after-login') || '').startsWith('buy:');
+    const intro = buying ? '登录后即可继续购买。首次验证手机号后将自动创建账户。' : '首次验证手机号后将自动创建账户。';
     if (user) {
       const currentField = user.hasPassword ? '<input class="field" id="currentPassword" type="password" autocomplete="current-password" placeholder="当前密码">' : '';
-      content.innerHTML = '<h2>账户中心</h2><div class="account-panel"><strong>' + escapeHtml(user.phone) + '</strong><p>已登录</p><p>当前权益：' + escapeHtml(options.planLabel?.() || '') + '</p><p>本机赛事：' + escapeHtml(options.eventLabel?.() || '') + '</p><p>' + (user.hasPassword ? '已设置登录密码，可直接用手机号和密码登录。' : '尚未设置密码。设置后可直接用手机号和密码登录。') + '</p></div><form class="password-form" id="passwordForm"><h3>登录密码</h3>' + currentField + '<input class="field" id="accountPassword" type="password" autocomplete="new-password" maxlength="64" placeholder="新密码，至少 8 位"><input class="field" id="accountPasswordAgain" type="password" autocomplete="new-password" maxlength="64" placeholder="再输入一次新密码"><p class="login-hint" id="passwordHint" aria-live="polite"></p><button class="login-submit" id="savePassword" type="submit">' + (user.hasPassword ? '修改密码' : '设置密码') + '</button></form><div class="account-actions"><button id="logoutAccount" type="button">退出登录</button></div>';
+      content.innerHTML = '<h2>账户中心</h2><div class="account-panel"><strong>' + escapeHtml(user.phone) + '</strong><p>已登录</p><p>当前权益：' + escapeHtml(options.planLabel?.() || '') + '</p><p>本机赛事：' + escapeHtml(options.eventLabel?.() || '') + '</p><p>' + (user.hasPassword ? '已设置登录密码，可直接用手机号和密码登录。' : '尚未设置密码。设置后可直接用手机号和密码登录。') + '</p></div><form class="password-form" id="passwordForm"><h3>登录密码</h3>' + currentField + '<input class="field" id="accountPassword" type="password" autocomplete="new-password" maxlength="64" placeholder="新密码，至少 8 位"><input class="field" id="accountPasswordAgain" type="password" autocomplete="new-password" maxlength="64" placeholder="再输入一次新密码"><p class="login-hint" id="passwordHint" aria-live="polite"></p><button class="login-submit" id="savePassword" type="submit">' + (user.hasPassword ? '修改密码' : '设置密码') + '</button></form><div class="account-actions"><button id="logoutAccount" type="button">退出登录</button><a class="secondary" id="backHome" href="index.html">返回赛事</a></div>';
       const logout = byId('logoutAccount');
       if (logout) logout.onclick = signOut;
       byId('passwordForm').onsubmit = savePassword;
       return;
     }
-    content.innerHTML = '<h2>登录</h2><p class="login-intro">' + intro + '</p><div class="login-modes" role="tablist"><button type="button" id="loginModeSms" class="' + (loginMode === 'sms' ? 'is-current' : 'secondary') + '">短信验证码</button><button type="button" id="loginModePassword" class="' + (loginMode === 'password' ? 'is-current' : 'secondary') + '">密码登录</button></div>' + (loginMode === 'password'
-      ? '<form class="login-form" id="loginForm"><input class="field" id="loginPhone" name="phone" inputmode="tel" autocomplete="username" maxlength="11" placeholder="请输入 11 位手机号"><input class="field" id="loginPassword" name="password" type="password" autocomplete="current-password" maxlength="64" placeholder="请输入密码"><p class="login-hint" id="loginHint" aria-live="polite">还没有密码时，请先用短信验证码登录，再在账户里设置。</p><button class="login-submit" id="loginSubmit" type="submit">登录</button></form>'
-      : '<form class="login-form" id="loginForm"><input class="field" id="loginPhone" name="phone" inputmode="tel" autocomplete="tel" maxlength="11" placeholder="请输入 11 位手机号"><div class="login-code-row"><input class="field" id="loginCode" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="输入验证码"><button class="secondary" id="sendLoginCode" type="button">获取验证码</button></div><p class="login-hint" id="loginHint" aria-live="polite"></p><button class="login-submit" id="loginSubmit" type="submit">登录 / 注册</button></form>');
+    content.innerHTML = '<h2>登录</h2><p class="login-intro">' + intro + '</p><div class="login-modes" role="tablist"><button type="button" id="loginModeSms" class="' + (loginMode === 'sms' ? 'is-current' : 'secondary') + '">短信验证码</button><button type="button" id="loginModePassword" class="' + (loginMode === 'password' ? 'is-current' : 'secondary') + '">账号登录</button></div>' + (loginMode === 'password'
+      ? '<form class="login-form" id="loginForm"><input class="field" id="loginPhone" name="phone" inputmode="tel" autocomplete="username" maxlength="11" placeholder="请输入 11 位手机号"><input class="field" id="loginPassword" name="password" type="password" autocomplete="current-password" maxlength="64" placeholder="请输入密码"><p class="login-hint" id="loginHint" aria-live="polite">还没有账号时，请先注册并设置密码。</p>' + registerLinkHtml() + '<button class="login-submit" id="loginSubmit" type="submit">登录</button></form>'
+      : '<form class="login-form" id="loginForm"><input class="field" id="loginPhone" name="phone" inputmode="tel" autocomplete="tel" maxlength="11" placeholder="请输入 11 位手机号"><div class="login-code-row"><input class="field" id="loginCode" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="输入验证码"><button class="secondary" id="sendLoginCode" type="button">获取验证码</button></div><p class="login-hint" id="loginHint" aria-live="polite"></p>' + registerLinkHtml() + '<button class="login-submit" id="loginSubmit" type="submit">登录</button></form>');
     byId('loginModeSms').onclick = () => {
       loginMode = 'sms';
       renderLogin();
@@ -130,6 +185,10 @@
       renderLogin();
       byId('loginPassword')?.focus();
     };
+    byId('goRegister')?.addEventListener('click', event => {
+      event.preventDefault();
+      openRegisterPage();
+    });
     byId('loginPhone').addEventListener('input', () => {
       byId('loginPhone').value = byId('loginPhone').value.replace(/\D/g, '').slice(0, 11);
       if (loginMode === 'sms') paintSendButton();
@@ -143,6 +202,30 @@
     });
     byId('sendLoginCode').onclick = sendCode;
     byId('loginForm').onsubmit = verifyCode;
+    paintSendButton();
+  }
+
+  function renderRegister() {
+    const content = byId('registerContent') || byId('loginContent');
+    if (!content) return;
+    if (root.currentUser?.()) {
+      location.href = loginHref();
+      return;
+    }
+    content.innerHTML = '<h2>新用户注册</h2><p class="login-intro">使用手机号注册，验证短信后即可同步到云端账户。</p><form class="register-form" id="registerForm"><input class="field" id="registerPhone" name="phone" inputmode="tel" autocomplete="tel" maxlength="11" placeholder="请输入 11 位手机号"><input class="field" id="registerPassword" name="password" type="password" autocomplete="new-password" maxlength="64" placeholder="设置密码，至少 8 位"><input class="field" id="registerPasswordAgain" name="passwordAgain" type="password" autocomplete="new-password" maxlength="64" placeholder="再输入一次密码"><div class="login-code-row"><input class="field" id="registerCode" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="输入验证码"><button class="secondary" id="sendRegisterCode" type="button">获取验证码</button></div><p class="login-hint" id="registerHint" aria-live="polite"></p><button class="login-submit" id="registerSubmit" type="submit">注册并登录</button></form><p class="login-register-link"><a href="login.html" id="goLogin">已有账号？去登录</a></p>';
+    byId('registerPhone').addEventListener('input', () => {
+      byId('registerPhone').value = byId('registerPhone').value.replace(/\D/g, '').slice(0, 11);
+      paintSendButton();
+    });
+    byId('registerCode').addEventListener('input', () => {
+      byId('registerCode').value = byId('registerCode').value.replace(/\D/g, '').slice(0, 6);
+    });
+    byId('sendRegisterCode').onclick = sendCode;
+    byId('registerForm').onsubmit = submitRegister;
+    byId('goLogin')?.addEventListener('click', event => {
+      event.preventDefault();
+      openLoginPage();
+    });
     paintSendButton();
   }
 
@@ -160,12 +243,15 @@
 
   function finishLogin(data) {
     saveSession(data);
-    const pending = sessionStorage.getItem('ranking-after-login') || '';
-    sessionStorage.removeItem('ranking-after-login');
-    renderLogin();
-    byId('loginDialog')?.close();
     stopTick();
     options.onLogin?.();
+    if (pageMode || registerMode) {
+      returnAfterLogin();
+      return;
+    }
+    renderLogin();
+    const pending = sessionStorage.getItem('ranking-after-login') || '';
+    sessionStorage.removeItem('ranking-after-login');
     if (pending.startsWith('buy:')) {
       const kind = pending.slice(4);
       if (PURCHASES[kind]) options.continuePurchase?.(kind);
@@ -174,10 +260,10 @@
 
   async function sendCode() {
     if (sending) return;
-    const phone = normalizePhone(byId('loginPhone').value);
+    const phone = normalizePhone(phoneField()?.value);
     if (!/^1[3-9]\d{9}$/.test(phone)) {
       setHint('请输入有效的 11 位手机号。', 'error');
-      byId('loginPhone').focus();
+      phoneField()?.focus();
       return;
     }
     sending = true;
@@ -192,7 +278,7 @@
       return;
     }
     setHint(data.message || '验证码已发送，5 分钟内有效。', 'ok');
-    byId('loginCode')?.focus();
+    (byId('loginCode') || byId('registerCode'))?.focus();
   }
 
   async function verifyCode(event) {
@@ -212,16 +298,16 @@
     const submit = byId('loginSubmit');
     if (submit) {
       submit.disabled = true;
-      submit.textContent = '正在验证…';
+      submit.textContent = '正在登录…';
     }
     const data = await post(VERIFY, {phone, code});
     verifying = false;
     if (!data.ok || !data.user?.phone) {
       if (submit) {
         submit.disabled = false;
-        submit.textContent = '登录 / 注册';
+        submit.textContent = '登录';
       }
-      setHint(data.message || '验证码不正确。', 'error');
+      setHint(data.message || '验证码不正确或已过期。', 'error');
       return;
     }
     finishLogin(data);
@@ -236,8 +322,8 @@
       setHint('请输入有效的 11 位手机号。', 'error');
       return;
     }
-    if (password.length < 8) {
-      setHint('密码至少 8 位。', 'error');
+    if (!password) {
+      setHint('请输入密码。', 'error');
       return;
     }
     verifying = true;
@@ -254,6 +340,48 @@
         submit.textContent = '登录';
       }
       setHint(data.message || '手机号或密码不正确。', 'error');
+      return;
+    }
+    finishLogin(data);
+  }
+
+  async function submitRegister(event) {
+    event.preventDefault();
+    if (verifying) return;
+    const phone = normalizePhone(byId('registerPhone').value);
+    const password = String(byId('registerPassword').value || '');
+    const again = String(byId('registerPasswordAgain').value || '');
+    const code = String(byId('registerCode').value || '').replace(/\D/g, '');
+    if (!/^1[3-9]\d{9}$/.test(phone)) {
+      setHint('请输入有效的 11 位手机号。', 'error');
+      return;
+    }
+    if (password.length < 8) {
+      setHint('密码至少 8 位。', 'error');
+      return;
+    }
+    if (password !== again) {
+      setHint('两次输入的密码不一致。', 'error');
+      return;
+    }
+    if (!/^\d{6}$/.test(code)) {
+      setHint('请输入 6 位验证码。', 'error');
+      return;
+    }
+    verifying = true;
+    const submit = byId('registerSubmit');
+    if (submit) {
+      submit.disabled = true;
+      submit.textContent = '正在注册…';
+    }
+    const data = await post(REGISTER, {phone, password, code});
+    verifying = false;
+    if (!data.ok || !data.user?.phone) {
+      if (submit) {
+        submit.disabled = false;
+        submit.textContent = '注册并登录';
+      }
+      setHint(data.message || '注册失败，请稍后再试。', 'error');
       return;
     }
     finishLogin(data);
@@ -305,25 +433,26 @@
 
   function mount(next) {
     options = next || {};
-    const actions = document.querySelector('.header-actions');
-    if (!actions || byId('accountEntry')) return;
-    actions.insertAdjacentHTML('afterbegin', '<button class="secondary account-entry" id="accountEntry" type="button">登录</button>');
-    document.body.insertAdjacentHTML('beforeend', '<dialog class="method-dialog login-dialog" id="loginDialog"><div class="dialog-content"><button class="dialog-close" id="closeLoginDialog" type="button" aria-label="关闭">×</button><div id="loginContent"></div></div></dialog>');
-    byId('accountEntry').onclick = () => {
+    registerMode = options.page === 'register' || Boolean(byId('registerPageRoot'));
+    pageMode = Boolean(options.page === true || options.page === 'login' || byId('loginPageRoot')) && !registerMode;
+    if (registerMode) {
+      renderRegister();
+      startTick();
+      byId('registerPhone')?.focus();
+      return;
+    }
+    if (pageMode) {
       renderLogin();
-      byId('loginDialog').showModal();
       startTick();
       if (!root.currentUser?.()) byId('loginPhone')?.focus();
-    };
-    byId('closeLoginDialog').onclick = () => {
-      sessionStorage.removeItem('ranking-after-login');
-      byId('loginDialog').close();
-      stopTick();
-    };
-    byId('loginDialog').addEventListener('close', stopTick);
-    byId('loginDialog').addEventListener('cancel', () => sessionStorage.removeItem('ranking-after-login'));
+      return;
+    }
+    const actions = document.querySelector('.header-actions');
+    if (!actions || byId('accountEntry')) return;
+    actions.insertAdjacentHTML('afterbegin', '<button class="account-entry account-capsule" id="accountEntry" type="button">登录</button>');
+    byId('accountEntry').onclick = openLoginPage;
     renderLogin();
   }
 
-  root.PhoneLogin = {mount, normalizePhone, logout: signOut};
+  root.PhoneLogin = {mount, normalizePhone, logout: signOut, open: openLoginPage, openRegister: openRegisterPage};
 })(typeof window === 'undefined' ? globalThis : window);

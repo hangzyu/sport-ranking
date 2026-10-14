@@ -78,7 +78,7 @@
     const rounds = {};
     matches.forEach((match, index) => ((rounds[match[4]] ??= []).push([match, index])));
     return Object.entries(rounds).map(([round, rows]) => {
-      return '<section class="round"><div class="round-title">小组赛第 ' + escapeHtml(round) + ' 轮</div>'
+      return '<section class="round"><div class="round-title">小组赛 · 第 ' + escapeHtml(round) + ' 轮</div>'
         + rows.map(([match, index]) => fixture(match, index, teams, locked, penalty, ready)).join('')
         + '</section>';
     }).join('');
